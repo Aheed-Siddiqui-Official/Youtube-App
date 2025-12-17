@@ -1,0 +1,9 @@
+
+How to setup a professional backend project
+npm init
+touch gitbash
+.gitkeep
+module.js
+devdep dep
+mkdir
+prettier
