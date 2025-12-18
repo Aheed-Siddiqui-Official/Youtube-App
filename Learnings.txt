@@ -7,3 +7,6 @@ module.js
 devdep dep
 mkdir
 prettier
+
+
+How to connect database in MERN with debugging
