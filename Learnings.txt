@@ -10,3 +10,12 @@ prettier
 
 
 How to connect database in MERN with debugging
+no allow access from anywhere in production ip address 0.0.0.0/0
+remove / from url of mongodb connection string
+wrap db in try catch / promise when communicate
+db is always another continent async await time lagta h
+; before iffe in professional envirment
+throw / process.exit
+connection instance:log
+dotenv = as early as possible in your application import and configure dotenv
+nodemon -r dotenv/config --experimental-json-modules src/index.js
