@@ -1,5 +1,5 @@
 
-How to setup a professional backend project
+1) How to setup a professional backend project
 npm init
 touch gitbash
 .gitkeep
@@ -9,7 +9,7 @@ mkdir
 prettier
 
 
-How to connect database in MERN with debugging
+2) How to connect database in MERN with debugging
 no allow access from anywhere in production ip address 0.0.0.0/0
 remove / from url of mongodb connection string
 wrap db in try catch / promise when communicate
@@ -21,7 +21,7 @@ dotenv = as early as possible in your application import and configure dotenv
 nodemon -r dotenv/config --experimental-json-modules src/index.js
 
 
-Custom api response and error handling
+3) Custom api response and error handling
 middleware's/configurations are used by app.use
 CORS_ORIGIN = *
 explore cors
@@ -40,3 +40,23 @@ Successful responses (200 – 299)
 Redirection messages (300 – 399)
 Client error responses (400 – 499)
 Server error responses (500 – 599)
+
+
+4) User and video model with hooks and JWT
+mongodata save user in bson data
+
+JSON (JavaScript Object Notation) is the human-readable data interchange format you interact with, while BSON (Binary JSON) is the internal, binary-encoded format that MongoDB uses for efficient storage and high performance
+
+When you insert a JSON document into MongoDB, the database automatically converts it to BSON for storage. When you query data, the drivers convert the retrieved BSON back into JSON-like objects (e.g., Python dictionaries, JavaScript objects) in your application.
+
+"User" will become plural and lowercase --> "users"
+to make field searchable in db make index true
+timestamps:true makes createdAt and updatedAt
+mongoose-aggregate-paginate-v2
+bcrypt jwt
+pre hook : runs just before saving data encrypt password
+pre takes normal function because arrow func doest have this. property
+methods .compare
+jwt is a bearer token => who owns data given like a key (secure)
+refresh token payload has less data because of continuous refresh
+
