@@ -60,3 +60,23 @@ methods .compare
 jwt is a bearer token => who owns data given like a key (secure)
 refresh token payload has less data because of continuous refresh
 
+5) How to upload file in backend | Multer
+first take file from user and upload on server/local storage and then upload to cloudinary through multer because if user entered wrong file he has chance to edit
+
+if file uploaded well remove from server too
+server restart when env touched
+multer middleware documentation
+difference between multer disk and memory storage
+multer, cors
+
+6) HTTP crash course | http Methods | http headers
+ url,uri,urn uniform resource locater/identifier
+HTTP headers req, res
+headers do caching, authentication(token, bearer), manage state
+req head -> client
+res head -> server
+representation header -> encoding/compression
+payload(fancy name of data) head -> data
+most common headers -> accept, auth, cookie, content-type, cache
+cors, security headers
+optimize data structure to avoid delay of the user
