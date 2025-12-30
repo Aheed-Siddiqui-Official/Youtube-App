@@ -12,7 +12,7 @@ prettier
 
 2) How to connect database in MERN with debugging
 no allow access from anywhere in production ip address 0.0.0.0/0
-remove / from url of mongodb connection string
+remove (/) from url of mongodb connection string
 wrap db in try catch / promise when communicate
 db is always another continent async await time lagta h
 ; before iffe in professional envirment
@@ -29,7 +29,7 @@ explore cors
 //accepting json
 app.use(express.json({limit:"16kb"}))
 file uploading handles multer
-its hard to extrat data from url m+a/m%20a
+its hard to extract data from url m+a/m%20a
 cookie parser is used to perform crud ops on server
 (err, req, res, next)
 repeating code is written in utils like trycatch and async await of db
@@ -61,6 +61,7 @@ methods .compare
 jwt is a bearer token => who owns data given like a key (secure)
 refresh token payload has less data because of continuous refresh
 
+
 5) How to upload file in backend | Multer
 first take file from user and upload on server/local storage and then upload to cloudinary through multer because if user entered wrong file he has chance to edit
 
@@ -69,6 +70,7 @@ server restart when env touched
 multer middleware documentation
 difference between multer disk and memory storage
 multer, cors
+
 
 6) HTTP crash course | http Methods | http headers
  url,uri,urn uniform resource locater/identifier
@@ -82,10 +84,12 @@ most common headers -> accept, auth, cookie, content-type, cache
 cors, security headers
 optimize data structure to avoid delay of the user
 
+
 7) Complete guide for router and controller with debugging
 main route in app file and sub routes in user file
 http://localhost:8000/api/v1/users/register
 router.route("/register").post(registerUser)
+
 
 8) Logic building | Register controller
 multer upload.field
@@ -107,3 +111,19 @@ some method, trim
 
 multer gives req.files option
 findById, select("-password -refreshToken")
+
+
+9) How to use postman for backend
+cloudinary response (url, secure_url)
+log req.body, req.files [Object: null prototype]
+cloudinary.js (fs.unlinkSync(localFilePath)) temporarily stores in local storage and synchronously deletes
+findById, select("-password -refreshToken") no password and token in postman response
+Array.isArray(req.files.coverImage)
+bug resolved of coverImage = "" in userController 41
+bug resolved of await User.findOne({}) in userController 41
+cloudinary returns "" empty string when no coverImage
+postman environment : {{server}}/users/register
+
+
+10) Access Refresh Token, Middleware and cookies in Backend
+
