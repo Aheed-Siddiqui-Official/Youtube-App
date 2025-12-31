@@ -126,4 +126,49 @@ postman environment : {{server}}/users/register
 
 
 10) Access Refresh Token, Middleware and cookies in Backend
+access token short lived, refresh token long lived
+access token for authentication/login/some features provide/15 min expires again provide password/expire in short duration
+refresh token is saved in db and given to user / we validate user by access token but we say not to enter password again and again, an end point is hit and refresh tokens are compared by db one and new access token is generated 
 
+loginUser Functionality
+// req body -> data
+  // validation form/req data (username or email base)
+  // req db / find user
+  // password check
+  // access and refresh token and send to user
+  // send in cookies secure
+  // res === login
+
+ $or: [{ username }, { email }], mongoDB operator
+
+User is your created in model, user is retrieved from db
+
+validateBeforeSave: false
+
+// only modified by server not frontend
+  // const options = {
+  //   httpOnly: true,
+  //   secure: true,
+  // };
+
+
+.json(
+    //   new ApiResponse(
+    //     200,
+
+    //      data in api response
+    //     {
+    //       user: loggedInUser,
+    //       accessToken,
+    //       refreshToken,
+    //     },
+    //     "User logged In Successfully"
+    //   )
+    // );
+
+Authorization Bearer Access Token
+Auth middleware understand
+Login user logout user controller, routes
+if res not used in parameters so we can write _
+
+11) Access token and refresh token in Backend
