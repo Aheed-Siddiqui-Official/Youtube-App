@@ -186,3 +186,20 @@ user has encrypted token and db has raw token jwt
 _id isn't in schema but default made by db so we can access though in code in userModel
 options in refreshAccessToken controller
 try catch for safety purpose
+
+
+12) Writing update controllers for user
+changeCurrentPasswordin user controller
+
+subscription model
+id user is logged in through middleware so we can get id of user from req.user
+can add confirm password too
+
+separate controllers for updating files production level approach
+less network congestion
+
+updateAccountDetails
+new:true return updated value
+mongoDB set method
+
+update controllers
