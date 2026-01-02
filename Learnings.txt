@@ -141,7 +141,7 @@ loginUser Functionality
 
  $or: [{ username }, { email }], mongoDB operator
 
-User is your created in model, user is retrieved from db
+(User) is you created in model, (user) is retrieved from db
 
 validateBeforeSave: false
 
@@ -152,6 +152,7 @@ validateBeforeSave: false
   // };
 
 
+// loginUser controller
 .json(
     //   new ApiResponse(
     //     200,
@@ -172,3 +173,16 @@ Login user logout user controller, routes
 if res not used in parameters so we can write _
 
 11) Access token and refresh token in Backend
+
+refreshAccessToken controller
+
+access and refresh token work is to only help user not to enter password again and again
+access token is timed, if expired 401 error
+on frontend a code is written if 401 req hit an end point refresh access token
+to get new access token a refresh token is send and compares if refresh token is same new access token generated and login successful
+refresh token is saved in db and called when needed
+user has encrypted token and db has raw token jwt
+
+_id isn't in schema but default made by db so we can access though in code in userModel
+options in refreshAccessToken controller
+try catch for safety purpose
