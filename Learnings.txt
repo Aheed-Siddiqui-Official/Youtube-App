@@ -203,3 +203,36 @@ new:true return updated value
 mongoDB set method
 
 update controllers
+
+13) Understand the subscription Schema
+
+didn't put subscribers array in user model because of large data set 1m etc, made diff model in db
+both subscriber and channel are users
+
+every time a new entry made a new document of subscriber and channel is made
+if we want to find subscribers of the yt channel so we will match the channel name in data set
+to find subs well find in subscription model but find channel name same in objects or data sets
+channels ma find karo ga tu subscriber mila ga
+subscriber ma find kro ga tu channel mila ga
+
+-------------		---------------------
+-	    -		-    Same Channel   -
+-    Subs   -   ---->	-                   -
+-	    -		-    in data set    -
+-------------		---------------------
+
+to find whom you have subscribed find subscriber value (c) in the data set
+
+-------------		---------------------
+-	    -		-    Same Channel   -
+-    Subs   -   <----	-                   -
+-	    -		-    in data set    -
+-------------		---------------------
+
+
+
+
+
+
+
+
