@@ -230,9 +230,50 @@ to find whom you have subscribed find subscriber value (c) in the data set
 -------------		---------------------
 
 
+14) Learn Mongodb aggregation pipelines
 
+aggregation is one or more process that process documents
+if you have 100 docs and you put condition filter these 100 docs to 50 so in next time/step operation will be performed on 50 docs 
+db.orders.aggregate([{
+	each object is stage in array
+}])
 
+getUserChannelProfile
 
+lookup used to join different tables/documents
+addFields
+when visit a channel take username from req.params (url)
+model name like Subscription converts to lowercase in db and plural (subscriptions)
+select channels to find subs
+select subscriber to find subscribedTo
 
+$(match, lookup, addFields($size), cond, in, project)
+in can see in arrays and objects both
+then else
+project tells that ill not give all values ill only show projected allowed values
 
+What is an aggregation pipeline?
+
+Think of it as:
+
+“Take documents → pass them through stages → transform → return result”
+
+Each {} inside the array is one stage.
+
+"$subscribers.subscriber" = This is array projection.
+
+e.g.
+[
+  { subscriber: ObjectId("u1") },
+  { subscriber: ObjectId("u2") },
+]
+
+"$subscribers.subscriber"
+
+[
+  ObjectId("u1"),
+  ObjectId("u2")
+]
+
+MongoDB extracts the subscriber field from every object.
 
