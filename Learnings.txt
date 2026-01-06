@@ -248,7 +248,7 @@ select channels to find subs
 select subscriber to find subscribedTo
 
 $(match, lookup, addFields($size), cond, in, project)
-in can see in arrays and objects both
+it can see in arrays and objects both
 then else
 project tells that ill not give all values ill only show projected allowed values
 
@@ -276,4 +276,26 @@ e.g.
 ]
 
 MongoDB extracts the subscriber field from every object.
+
+
+15) How to write sub pipelines and routes
+
+!!!!!!!!!!important
+nested lookup
+we get mongodb id in string in req.user._id
+but we use mongoose so it automatically converts to ObjectId('69542070c93a013b017c2ac0')
+aggregation pipeline goes directly it is not operated by mongoose
+
+getWatchHistory
+we go to users getWatchHistory
+find and join add videos documents
+sub pipeline : when get field lookup at that time that come back from owner to user and find again all values 
+after lookup use project and return desired values
+then we get array from lookup
+we wrote another pipeline to (add fields) to take data from array
+.patch method used to update account details
+.post replace all details but patch only replace changed details
+
+
+
 
