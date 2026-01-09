@@ -1,3 +1,7 @@
 first define project structure
 navbar tag and component cant be used simultaneously because of same name
 use header or div
+use location hook react
+::-webkit-scrollbar {
+  display: none;
+}
