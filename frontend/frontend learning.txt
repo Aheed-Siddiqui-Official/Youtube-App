@@ -5,3 +5,6 @@ use location hook react
 ::-webkit-scrollbar {
   display: none;
 }
+
+redux setup
+async thunk
