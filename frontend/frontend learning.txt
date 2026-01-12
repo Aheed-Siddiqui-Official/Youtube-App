@@ -8,3 +8,11 @@ use location hook react
 
 redux setup
 async thunk
+local signup states
+value assign
+form data
+dispatch
+Hooks cannot run outside the component body. Always inside the function.
+cors origin in backend
+import.meta.env.BACKEND_PORT to use .env in frontend
+process.env to use .env in backend
