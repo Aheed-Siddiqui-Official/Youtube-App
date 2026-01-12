@@ -8,6 +8,12 @@ import mongoose from "mongoose";
 
 // async handler not user because not handling a web request just using an internal function request
 
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+};
+
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -61,7 +67,6 @@ const registerUser = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.files?.avatar[0]?.path;
   console.log("req.files", req.files);
   console.log("req.body", req.body);
-  
 
   // const coverImageLocalPath = req.files?.coverImage[0]?.path;
   // bug resolved
@@ -147,24 +152,19 @@ const loginUser = asyncHandler(async (req, res) => {
     "-password -refreshToken"
   );
 
-  // only modified by server not frontend
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
+  console.log("Setting cookies with options:", cookieOptions);
+  console.log("AccessToken:", accessToken.substring(0, 20) + "...");
 
   return res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
     .json(
       new ApiResponse(
         200,
         //data in api response
         {
           user: loggedInUser,
-          accessToken,
-          refreshToken,
         },
         "User logged In Successfully"
       )
@@ -185,16 +185,10 @@ const logoutUser = asyncHandler(async (req, res) => {
     }
   );
 
-  // only modified by server not frontend
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
-
   return res
     .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
     .json(new ApiResponse(200, {}, "User logged Out"));
 });
 
@@ -218,33 +212,19 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
     const user = await User.findById(decodedToken?._id);
 
-    if (!user) {
+    if (!user || user.refreshToken !== incomingRefreshToken) {
       throw new ApiError(401, "Invalid refresh token");
     }
 
-    if (incomingRefreshToken !== user?.refreshToken) {
-      throw new ApiError(401, "Refresh token is expired or used");
-    }
-
-    const options = {
-      httpOnly: true,
-      secure: true,
-    };
-
-    const { accessToken, newRefreshToken } =
-      await generateAccessAndRefreshTokens(user._id);
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+      user._id
+    );
 
     return res
       .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", newRefreshToken, options)
-      .json(
-        new ApiResponse(
-          200,
-          { accessToken, newRefreshToken },
-          "Access token refreshed"
-        )
-      );
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
+      .json(new ApiResponse(200, { accessToken }, "Access token refreshed"));
   } catch (error) {
     throw new ApiError(402, error?.message || "Invalid refresh token");
   }
