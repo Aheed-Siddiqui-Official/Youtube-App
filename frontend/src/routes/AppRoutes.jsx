@@ -9,6 +9,7 @@ import Collection from "../pages/Collection";
 import Community from "../pages/Community";
 import SignUp from "../components/auth/SignUp";
 import Login from "../components/auth/Login";
+import Settings from "../pages/Settings";
 
 const AppRoutes = () => {
   return (
@@ -22,6 +23,7 @@ const AppRoutes = () => {
       <Route path="/community" element={<Community />} />
       <Route path="/signup" element={<SignUp/>} />
       <Route path="/login" element={<Login/>} />
+      <Route path="/settings" element={<Settings/>} />
     </Routes>
   );
 };

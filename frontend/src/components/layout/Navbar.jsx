@@ -34,7 +34,23 @@ const Navbar = ({ onMenuClick }) => {
       <div className="ml-auto flex gap-3 items-center">
         {isAuthenticated ? (
           <>
-            <span className="text-white hidden sm:block">{user?.username}</span>
+            <a href="/dashboard">
+              <img
+                src={user?.avatar}
+                alt="avatar"
+                className="
+    w-9 h-9 
+    rounded-full 
+    object-cover 
+    border-2 border-gray-700
+    hover:border-blue-500
+    transition-all duration-200
+    cursor-pointer
+    hidden sm:block
+  "
+              />
+            </a>
+
             <button
               onClick={handleLogout}
               className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-400"

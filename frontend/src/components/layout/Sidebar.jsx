@@ -7,6 +7,7 @@ import {
   Folder,
   Users,
   LayoutDashboard,
+  Settings,
   X,
 } from "lucide-react";
 
@@ -21,13 +22,12 @@ const navItems = [
 
 const Sidebar = ({ onClose }) => {
   return (
-    <div className="h-full flex flex-col p-4 overflow-hidden">
-      
+    <div className="h-full flex flex-col p-4 overflow-hidden bg-black">
       {/* Mobile Close */}
       {onClose && (
         <button
           onClick={onClose}
-          className="md:hidden mb-4 flex items-center gap-2 text-gray-400"
+          className="md:hidden mb-4 flex items-center gap-2 text-gray-400 hover:text-white"
         >
           <X size={18} />
           Close
@@ -68,33 +68,60 @@ const Sidebar = ({ onClose }) => {
         ))}
       </nav>
 
-      {/* Dashboard (Bottom) */}
-      <NavLink
-        to="/dashboard"
-        onClick={onClose}
-        className={({ isActive }) =>
-          `relative mt-4 flex items-center gap-3 px-4 py-3 rounded border transition-all
-          ${
-            isActive
-              ? "bg-blue-600 text-white border-blue-500"
-              : "text-white border-gray-700 hover:bg-gray-800"
-          }`
-        }
-      >
-        {({ isActive }) => (
-          <>
-            <LayoutDashboard size={20} className="shrink-0" />
-            <span className="font-semibold">Dashboard</span>
+      {/* Bottom Actions */}
+      <div className="mt-4 space-y-2 border-t border-gray-800 pt-4">
+        {/* Dashboard */}
+        <NavLink
+          to="/dashboard"
+          onClick={onClose}
+          className={({ isActive }) =>
+            `relative flex items-center gap-3 px-4 py-3 rounded border transition-all
+            ${
+              isActive
+                ? "bg-blue-600 text-white border-blue-500"
+                : "text-white border-gray-700 hover:bg-gray-800"
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              <LayoutDashboard size={20} />
+              <span className="font-semibold">Dashboard</span>
+              {isActive && (
+                <span className="absolute inset-0 rounded bg-blue-500/10" />
+              )}
+            </>
+          )}
+        </NavLink>
 
-            {isActive && (
-              <span className="absolute inset-0 rounded bg-blue-500/10" />
-            )}
-          </>
-        )}
-      </NavLink>
+        {/* Settings */}
+        <NavLink
+          to="/settings"
+          onClick={onClose}
+          className={({ isActive }) =>
+            `relative flex items-center gap-3 px-4 py-3 rounded border transition-all
+            ${
+              isActive
+                ? "bg-gray-800 text-white border-gray-600"
+                : "text-gray-400 border-gray-700 hover:bg-gray-800 hover:text-white"
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              <Settings size={20} />
+              <span className="font-medium">Settings</span>
+              {isActive && (
+                <span className="absolute inset-0 rounded bg-blue-500/5" />
+              )}
+            </>
+          )}
+        </NavLink>
+      </div>
     </div>
   );
 };
 
 export default Sidebar;
+
 

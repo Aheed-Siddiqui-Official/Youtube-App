@@ -1,5 +1,4 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
 import api from "../../api/api.js";
 
 // --------------------
@@ -9,43 +8,33 @@ export const registerUser = createAsyncThunk(
   "auth/registerUser",
   async (formData, { rejectWithValue }) => {
     try {
-      // Post FormData to backend
-      const response = await api.post(
-        `/api/v1/users/register`,
-        formData
-      );
-      // Backend returns created user
-      return response.data.data; // adjust if backend wraps differently
+      const response = await api.post(`/api/v1/users/register`, formData);
+      return response.data.data; // created user
     } catch (error) {
-      // Return backend error message
-      if (error.response && error.response.data) {
-        return rejectWithValue(error.response.data.message);
-      } else {
-        return rejectWithValue(error.message);
-      }
+      return rejectWithValue(
+        error.response?.data?.message || "Registration failed"
+      );
     }
   }
 );
 
+// Login user
 export const loginUser = createAsyncThunk(
   "auth/login",
   async ({ email, password }, { rejectWithValue }) => {
     try {
-      const response = await api.post(
-        `/api/v1/users/login`,
-        {
-          email,
-          password,
-        }
-      );
-
-      return response.data.data.user;
+      const response = await api.post(`/api/v1/users/login`, {
+        email,
+        password,
+      });
+      return response.data.data.user; // backend returns user here
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message);
+      return rejectWithValue(error.response?.data?.message || "Login failed");
     }
   }
 );
 
+// Logout user
 export const logoutUser = createAsyncThunk(
   "auth/logout",
   async (_, { rejectWithValue }) => {
@@ -58,58 +47,121 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
+// Fetch current user on app boot
 export const fetchCurrentUser = createAsyncThunk(
   "auth/fetchCurrentUser",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get(
-        `/api/v1/users/current-user`
-      );
-      return response.data.data; // your backend sends user in data.data
+      const response = await api.get(`/api/v1/users/current-user`);
+      return response.data.data; // backend sends user in data.data
+    } catch (error) {
+      // Only reject on 401 (unauthorized), network errors keep user intact
+      if (error.response?.status === 401) {
+        return rejectWithValue("Unauthorized");
+      }
+      return rejectWithValue(error.message || "Failed to fetch user");
+    }
+  }
+);
+
+// Update details
+export const updateAccount = createAsyncThunk(
+  "auth/update-account",
+  async ({ fullName, email, username }, { rejectWithValue }) => {
+    try {
+      const response = await api.patch("/api/v1/users/update-account", {
+        username,
+        fullName,
+        email,
+      });
+      return response.data.data; // return updated user
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Update failed");
+    }
+  }
+);
+
+// Update password
+export const changePassword = createAsyncThunk(
+  "auth/change-password",
+  async ({ oldPassword, newPassword }, { rejectWithValue }) => {
+    try {
+      const response = await api.post("/api/v1/users/change-password", {
+        oldPassword,
+        newPassword,
+      });
+      return response.data.message; // just a success message
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message 
-        //|| "Failed to fetch user"
+        error.response?.data?.message || "Password update failed"
+      );
+    }
+  }
+);
+
+export const updateAvatar = createAsyncThunk(
+  "auth/update-avatar",
+  async (file, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      const response = await api.patch("/api/v1/users/avatar", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      return response.data.data; // return updated user
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Avatar update failed"
+      );
+    }
+  }
+);
+
+export const updateCoverImage = createAsyncThunk(
+  "auth/update-cover",
+  async (file, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append("coverImage", file);
+
+      const response = await api.patch("/api/v1/users/cover-image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      return response.data.data; // return updated user
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Cover Image update failed"
       );
     }
   }
 );
 
 // --------------------
-//  Slice
+// Slice
 // --------------------
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-    user: null,
+    user: null, // logged in user
+    isAuthenticated: false,
     isLoading: false,
     error: null,
-    isAuthenticated: false, // signup does not auto-login
   },
   reducers: {
     clearError(state) {
       state.error = null;
     },
-    logout(state) {
-      state.user = null;
-      state.isAuthenticated = false;
+    setUser(state, action) {
+      // Used by profile update
+      state.user = action.payload;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(registerUser.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(registerUser.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.user = action.payload;
-        state.isAuthenticated = false; // still false on signup
-      })
-      .addCase(registerUser.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload || "Something went wrong";
-      })
+      // -------- Login --------
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -118,17 +170,20 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
-        state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || "Login failed";
+        state.error = action.payload;
         state.isAuthenticated = false;
       })
+
+      // -------- Logout --------
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.isAuthenticated = false;
       })
+
+      // -------- Fetch Current User --------
       .addCase(fetchCurrentUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -142,7 +197,19 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
-        state.error = action.payload;
+        state.error = action.payload === "Unauthorized" ? null : action.payload;
+      })
+      .addCase(updateAccount.fulfilled, (state, action) => {
+        state.user = action.payload; // updated user info
+      })
+      .addCase(updateAvatar.fulfilled, (state, action) => {
+        state.user.avatar = action.payload.avatar;
+      })
+      .addCase(updateCoverImage.fulfilled, (state, action) => {
+        state.user.coverImage = action.payload.coverImage;
+      })
+      .addCase(changePassword.fulfilled, (state, action) => {
+        state.error = null; // clear error
       });
   },
 });
