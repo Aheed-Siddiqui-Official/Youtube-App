@@ -16,3 +16,15 @@ Hooks cannot run outside the component body. Always inside the function.
 cors origin in backend
 import.meta.env.BACKEND_PORT to use .env in frontend
 process.env to use .env in backend
+new cookieOptions made in backend
+axios file made in frontend
+
+.unwrap()
+
+This is important.
+If logout succeeds → continues
+If logout fails → throws an error
+api.put
+
+understand .wrap, reducers and extra reducers
+test token time
