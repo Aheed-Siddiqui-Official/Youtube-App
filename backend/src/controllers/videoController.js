@@ -1,3 +1,4 @@
+import { Subscription } from "../models/subscription.model.js";
 import { Video } from "../models/video.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -86,4 +87,114 @@ export const uploadVideo = asyncHandler(async (req, res) => {
   return res
     .status(201)
     .json(new ApiResponse(201, video, "Video uploaded successfully"));
+});
+
+export const getAllVideos = asyncHandler(async (req, res) => {
+  const videos = await Video.find({ isPublished: "true" })
+    .sort({ createdAt: -1 })
+    .populate("owner");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, videos, "Videos fetched successfully"));
+});
+
+export const getSingleVideo = asyncHandler(async (req, res) => {
+  const video = await Video.findOne({ slug: req?.params?.slug }).populate(
+    "owner"
+  );
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  let isSubscribed = false;
+
+  if (req.user) {
+    const subscription = await Subscription.findOne({
+      subscriber: req.user._id,
+      channel: video.owner._id,
+    });
+
+    isSubscribed = !!subscription;
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Video fetched successfully"));
+});
+
+export const deleteVideo = asyncHandler(async (req, res) => {
+  const video = await Video.findById(req?.params?.id);
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  if (String(video.owner) !== String(req?.user?.id)) {
+    throw new ApiError(403, "You are not authorized to delete this video");
+  }
+
+  await Video.findByIdAndDelete(req?.params?.id);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Video deleted successfully"));
+});
+
+//will do later
+export const getVideosByUser = asyncHandler(async (req, res) => {});
+
+export const updateVideo = asyncHandler(async (req, res) => {
+  // GET SINGLE VIDEO
+  // console.log(req.body)
+  const video = await Video.findById(req?.params?.id);
+  // CHECK VIDEO
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+  // console.log(video)
+
+  // CHECK FOR THE OWNER
+  if (String(video.owner) !== String(req?.user?._id)) {
+    throw new ApiError(403, "You are not authorized to update this video");
+  }
+
+  // GET VIDEO FROM MULTER
+  const videoLocalPath = req.file?.path;
+
+  // UPLOAD CLOUDINARY (only if video file is provided)
+  let updatedVideoURL;
+  if (videoLocalPath) {
+    const uploadResponse = await uploadCloudinary(videoLocalPath);
+
+    // DELETE OLD VIDEO if new video is uploaded
+    await cloudinary.uploader.destroy(video.videoFile);
+
+    // Update the video file URL with the response URL
+    updatedVideoURL = uploadResponse?.secure_url; // Access the URL from the response
+  }
+
+  // Generate new thumbnail URL only if video is updated
+  const newUpdatedVideoURL = updatedVideoURL || video.videoFile;
+
+  // UPDATE VIDEO
+  const updatedVideo = await Video.findByIdAndUpdate(
+    req?.params?.id,
+    {
+      title: req.body.title || video?.title,
+      description: req.body.description || video?.description,
+      category: req.body.category || video?.category,
+      slug: video?.slug,
+      isPublic: req.body.isPublic || video?.isPublic,
+      videoFile: newUpdatedVideoURL || video.videoFile, // Ensure videoFile is updated only if a new file is provided
+    },
+    { new: true }
+  );
+  // console.log(updateVideo)
+
+  // RETURN RESPONSE
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedVideo, "Video updated successfully"));
 });
