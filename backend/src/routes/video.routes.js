@@ -1,17 +1,17 @@
 import { Router } from "express";
-import { uploadVideo } from "../controllers/videoController";
+import { uploadVideo } from "../controllers/videoController.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
-router.route(
-  "/upload-video".post(
-    verifyJWT,
-    uploadOnCloudinary.fields([
-      { name: "video", maxCount: 1 },
-      { name: "thumbnail", maxCount: 1 },
-    ])
-  ),
+router.route("/upload-video").post(
+  verifyJWT,
+  upload.fields([
+    { name: "video", maxCount: 1 },
+    { name: "thumbnail", maxCount: 1 },
+  ]),
   uploadVideo
 );
 
-export default router
+export default router;

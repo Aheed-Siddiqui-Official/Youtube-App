@@ -1,12 +1,14 @@
-import { Video } from "../models/video.model";
-import { asyncHandler } from "../utils/asyncHandler";
-import { uploadOnCloudinary } from "../utils/cloudinary";
+import { Video } from "../models/video.model.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 export const uploadVideo = asyncHandler(async (req, res) => {
   const { title, description, category, isPublic } = req.body;
 
   if ([title, description].some((field) => field?.trim() === "")) {
-    throw new Error("All field are required");
+    throw new ApiError("All field are required");
   }
 
   const videoLocalPath = req.files?.video?.[0]?.path;
@@ -21,16 +23,30 @@ export const uploadVideo = asyncHandler(async (req, res) => {
   }
 
   // SLUG LOGIC
-  let slug = req.body.title.replace(/ /g, "-").toLowerCase();
-  let existSlug = await Video.findOne({ slug });
+  //   let slug = req.body.title.replace(/ /g, "-").toLowerCase();
+  //   let existSlug = await Video.findOne({ slug });
+  //   let counter = 2;
+  //   while (existSlug) {
+  //     slug = `${slug}-${counter}`;
+  //     existSlug = await Video.findOne({ slug });
+  //     counter++;
+  //   }
+
+  //   console.log(slug);
+
+  const baseSlug = title
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+  let slug = baseSlug;
   let counter = 2;
-  while (existSlug) {
-    slug = `${slug}-${counter}`;
-    existSlug = await Video.findOne({ slug });
+
+  while (await Video.findOne({ slug })) {
+    slug = `${baseSlug}-${counter}`;
     counter++;
   }
-
-  console.log(slug);
 
   let thumbnailUrl;
   const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
@@ -48,7 +64,7 @@ export const uploadVideo = asyncHandler(async (req, res) => {
 
     thumbnailUrl = videoURL?.url
       .replace("/upload/", "/upload/so_1,w_600,c_fill/")
-      .replace(".mp4", ".jpg");
+      .replace(/\.(mp4|mov|webm)$/i, ".jpg");
   }
 
   const video = await Video.create({
@@ -69,6 +85,5 @@ export const uploadVideo = asyncHandler(async (req, res) => {
 
   return res
     .status(201)
-    .json(new ApiResponse(201, video, "Video uploaded successfully")); 
+    .json(new ApiResponse(201, video, "Video uploaded successfully"));
 });
-
