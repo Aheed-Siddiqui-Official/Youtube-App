@@ -29,4 +29,15 @@ api.put
 understand .wrap, reducers and extra reducers
 test token time
 
+videoURL?.url
+“If videoURL exists, access .url; otherwise return undefined instead of crashing.
+
+videoURL.url
+If videoURL is null or undefined → runtime error.
+
+thumbnailUrl = videoURL?.url
+      .replace("/upload/", "/upload/so_1,w_600,c_fill/")
+      .replace(".mp4", ".jpg");
+
+{ new: true } ensures updatedVideo is the updated document, not the old one.
 
