@@ -142,7 +142,7 @@ export const deleteVideo = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Video deleted successfully"));
 });
 
-//will do later
+//will do
 export const getVideosByUser = asyncHandler(async (req, res) => {});
 
 export const updateVideo = asyncHandler(async (req, res) => {
