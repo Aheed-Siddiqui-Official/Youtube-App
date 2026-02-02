@@ -12,10 +12,10 @@ export const registerUser = createAsyncThunk(
       return response.data.data; // created user
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Registration failed"
+        error.response?.data?.message || "Registration failed",
       );
     }
-  }
+  },
 );
 
 // Login user
@@ -31,7 +31,7 @@ export const loginUser = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Login failed");
     }
-  }
+  },
 );
 
 // Logout user
@@ -44,7 +44,7 @@ export const logoutUser = createAsyncThunk(
     } catch {
       return rejectWithValue("Logout failed");
     }
-  }
+  },
 );
 
 // Fetch current user on app boot
@@ -61,7 +61,7 @@ export const fetchCurrentUser = createAsyncThunk(
       }
       return rejectWithValue(error.message || "Failed to fetch user");
     }
-  }
+  },
 );
 
 // Update details
@@ -78,7 +78,7 @@ export const updateAccount = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Update failed");
     }
-  }
+  },
 );
 
 // Update password
@@ -93,10 +93,10 @@ export const changePassword = createAsyncThunk(
       return response.data.message; // just a success message
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Password update failed"
+        error.response?.data?.message || "Password update failed",
       );
     }
-  }
+  },
 );
 
 export const updateAvatar = createAsyncThunk(
@@ -113,10 +113,10 @@ export const updateAvatar = createAsyncThunk(
       return response.data.data; // return updated user
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Avatar update failed"
+        error.response?.data?.message || "Avatar update failed",
       );
     }
-  }
+  },
 );
 
 export const updateCoverImage = createAsyncThunk(
@@ -133,10 +133,10 @@ export const updateCoverImage = createAsyncThunk(
       return response.data.data; // return updated user
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Cover Image update failed"
+        error.response?.data?.message || "Cover Image update failed",
       );
     }
-  }
+  },
 );
 
 // --------------------
@@ -149,6 +149,7 @@ const authSlice = createSlice({
     isAuthenticated: false,
     isLoading: false,
     error: null,
+    authChecked: false,
   },
   reducers: {
     clearError(state) {
@@ -181,6 +182,7 @@ const authSlice = createSlice({
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.isAuthenticated = false;
+        state.authChecked = true;
       })
 
       // -------- Fetch Current User --------
@@ -188,16 +190,16 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
+
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
-        state.isLoading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
+        state.authChecked = true;
       })
-      .addCase(fetchCurrentUser.rejected, (state, action) => {
-        state.isLoading = false;
+      .addCase(fetchCurrentUser.rejected, (state) => {
         state.user = null;
         state.isAuthenticated = false;
-        state.error = action.payload === "Unauthorized" ? null : action.payload;
+        state.authChecked = true;
       })
       .addCase(updateAccount.fulfilled, (state, action) => {
         state.user = action.payload; // updated user info

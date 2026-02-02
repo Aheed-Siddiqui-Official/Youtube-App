@@ -166,7 +166,7 @@ export const updateVideo = asyncHandler(async (req, res) => {
   // UPLOAD CLOUDINARY (only if video file is provided)
   let updatedVideoURL;
   if (videoLocalPath) {
-    const uploadResponse = await uploadCloudinary(videoLocalPath);
+    const uploadResponse = await uploadOnCloudinary(videoLocalPath);
 
     // DELETE OLD VIDEO if new video is uploaded
     await cloudinary.uploader.destroy(video.videoFile);

@@ -12,6 +12,7 @@ const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  path: "/",
 };
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -198,10 +199,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   // true access token new generate, false access token same
 
   const incomingRefreshToken =
-    req.cookies.refreshToken || req.body.refreshToken;
+    req.cookies?.refreshToken || req.body?.refreshToken;
 
   if (!incomingRefreshToken) {
-    throw new ApiError(401, "Unauthorized request");
+    throw new ApiError(401, "No refresh token, unauthorized");
   }
 
   try {
@@ -220,13 +221,16 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       user._id
     );
 
+    user.refreshToken = refreshToken;
+    await user.save();
+
     return res
       .status(200)
       .cookie("accessToken", accessToken, cookieOptions)
       .cookie("refreshToken", refreshToken, cookieOptions)
       .json(new ApiResponse(200, { accessToken }, "Access token refreshed"));
   } catch (error) {
-    throw new ApiError(402, error?.message || "Invalid refresh token");
+    throw new ApiError(401, error?.message || "Invalid refresh token");
   }
 });
 
@@ -258,7 +262,6 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 const updateAccountDetails = asyncHandler(async (req, res) => {
   const { fullName, email, username } = req.body;
   // console.log(username);
-  
 
   if (!fullName || !email || !username) {
     throw new ApiError(400, "All fields are required");
@@ -488,4 +491,3 @@ export {
   getUserChannelProfile,
   getWatchHistory,
 };
- 

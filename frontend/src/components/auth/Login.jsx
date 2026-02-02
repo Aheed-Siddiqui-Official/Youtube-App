@@ -57,10 +57,10 @@ const Login = () => {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading && !user}
             className="w-full bg-purple-500 py-2 rounded font-semibold hover:bg-purple-400 transition"
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading && !user ? "Logging in..." : "Login"}
           </button>
 
           <p className="text-sm text-gray-400">
