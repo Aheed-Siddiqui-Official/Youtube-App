@@ -37,13 +37,14 @@ export const loginUser = createAsyncThunk(
 // Logout user
 export const logoutUser = createAsyncThunk(
   "auth/logout",
-  async (_, { rejectWithValue }) => {
+  async (_, { fulfillWithValue }) => {
     try {
       await api.post(`/api/v1/users/logout`);
-      return true;
-    } catch {
-      return rejectWithValue("Logout failed");
+    } catch (e) {
+      // ignore errors — user is logging out anyway
     }
+
+    return fulfillWithValue(true);
   },
 );
 
@@ -171,11 +172,13 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
+        state.authChecked = true;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
         state.isAuthenticated = false;
+        state.authChecked = true;
       })
 
       // -------- Logout --------

@@ -30,7 +30,14 @@ const AppRoutes = () => {
       <Route path="/community" element={<Community />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/settings" element={<Settings />} />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Settings />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 };

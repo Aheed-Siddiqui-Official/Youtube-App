@@ -30,7 +30,15 @@ export const setupInterceptors = (store) => {
         return Promise.reject(error);
       }
 
-      if (error.response?.status !== 401 || originalRequest._retry) {
+      if (
+        !error.response ||
+        error.response.status !== 401 ||
+        originalRequest._retry
+      ) {
+        return Promise.reject(error);
+      }
+
+      if (originalRequest.url.includes("/refresh-token")) {
         return Promise.reject(error);
       }
 
@@ -50,7 +58,7 @@ export const setupInterceptors = (store) => {
         return api(originalRequest);
       } catch (err) {
         processQueue(err);
-        store.dispatch({ type: "auth/logout/fulfilled" });
+        store.dispatch(logoutUser());
         return Promise.reject(err);
       } finally {
         isRefreshing = false;

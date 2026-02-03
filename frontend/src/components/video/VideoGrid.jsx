@@ -1,7 +1,7 @@
 import React from "react";
 import VideoCard from "./VideoCard";
 
-const VideoGrid = ({ videos }) => {
+const VideoGrid = React.memo(({ videos }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
       {videos.map((video) => (
@@ -18,6 +18,7 @@ const VideoGrid = ({ videos }) => {
       ))}
     </div>
   );
-};
+});
 
+VideoGrid.displayName = "VideoGrid";
 export default VideoGrid;

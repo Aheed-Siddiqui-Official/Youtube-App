@@ -9,10 +9,6 @@ function App() {
   const dispatch = useDispatch();
   const authChecked = useSelector((state) => state.auth);
 
-  useEffect(() => {
-    dispatch(fetchCurrentUser());
-  }, [dispatch]);
-
   // STOP UI until auth known
   if (!authChecked) {
     return <AppSkeleton />;

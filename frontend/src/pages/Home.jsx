@@ -61,10 +61,23 @@ const Home = () => {
         "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
       title:
         "BONITA (VIDEO SONG): @YoYoHoneySingh | @TheShamsHere | GLORY | BHUSHAN...",
-      channelName: "farhad007",
+      channelName: "frhad007",
       views: "125 views",
       uploadTime: "11 months ago",
     },
+    {
+      id: 6,
+      thumbnail:
+        "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=450&fit=crop",
+      duration: "0:00",
+      avatarUrl:
+        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
+      title:
+        "BONITA (VIDEO SONG): @YoYoHoneySingh | @TheShamsHere | GLORY | BHUSHAN...",
+      channelName: "frhad007",
+      views: "125 views",
+      uploadTime: "11 months ago",
+    }
   ];
 
   return (

@@ -24,10 +24,10 @@ const Settings = () => {
 
   const [message, setMessage] = useState("");
 
-  // Load current user on mount
-  useEffect(() => {
-    dispatch(fetchCurrentUser());
-  }, [dispatch]);
+  // // Load current user on mount
+  // useEffect(() => {
+  //   dispatch(fetchCurrentUser());
+  // }, [dispatch]);
 
   // Pre-fill form when user data arrives
   useEffect(() => {
