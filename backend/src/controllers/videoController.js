@@ -90,9 +90,22 @@ export const uploadVideo = asyncHandler(async (req, res) => {
 });
 
 export const getAllVideos = asyncHandler(async (req, res) => {
-  const videos = await Video.find({ isPublished: "true" })
+  // Get page and limit from query params (default: page 1, limit 10)
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  // Calculate skip value
+  const skip = (page - 1) * limit;
+
+  // Fetch videos with pagination
+  const videos = await Video.find({ isPublished: true })
     .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
     .populate("owner");
+
+  // Get total count for metadata
+  const totalVideos = await Video.countDocuments({ isPublished: true });
 
   return res
     .status(200)
@@ -142,8 +155,32 @@ export const deleteVideo = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Video deleted successfully"));
 });
 
-//will do
-export const getVideosByUser = asyncHandler(async (req, res) => {});
+// will see later
+export const getVideosByUser = asyncHandler(async (req, res) => {
+  // GET SELECTED USER VIDEOS
+  const user = await User.findOne({ username: req?.params?.username });
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // GET SORT QUERY
+  const { sort } = req.query; // Get sort query parameter (newest or oldest)
+  let sortOption = { createdAt: -1 }; // Default newest
+
+  if (sort === "oldest") {
+    sortOption = { createdAt: 1 };
+  }
+
+  // GET VIDEOS WITH SORTING
+  const videos = await Video.find({ owner: user._id })
+    .sort(sortOption)
+    .populate("owner");
+
+  // RETURN RESPONSE
+  return res
+    .status(200)
+    .json(new ApiResponse(200, videos, "Videos fetched successfully"));
+});
 
 export const updateVideo = asyncHandler(async (req, res) => {
   // GET SINGLE VIDEO
@@ -197,4 +234,25 @@ export const updateVideo = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, updatedVideo, "Video updated successfully"));
+});
+
+export const getMyVideos = asyncHandler(async (req, res) => {
+  // req.user comes from auth middleware
+  const userId = req.user._id;
+
+  const { sort } = req.query;
+
+  let sortOption = { createdAt: -1 }; // newest default
+
+  if (sort === "oldest") {
+    sortOption = { createdAt: 1 };
+  }
+
+  const videos = await Video.find({ owner: userId })
+    .sort(sortOption)
+    .populate("owner", "username avatar"); // don't dump entire user doc
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, videos, "Your videos fetched successfully"));
 });

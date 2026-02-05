@@ -4,7 +4,7 @@ import Sidebar from "./Sidebar";
 import { useLocation } from "react-router-dom";
 
 const Layout = ({ children }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
 
   const authPaths = ["/login", "/signup"];
@@ -17,11 +17,14 @@ const Layout = ({ children }) => {
 
   return (
     <div className="h-screen bg-black text-white overflow-hidden">
-      <Navbar onMenuClick={() => setSidebarOpen(true)} />
+      <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
       <div className="flex h-[calc(100vh-64px)]">
-        {/* Desktop Sidebar */}
-        <aside className="hidden md:block w-64 border-r border-gray-700">
+        {/* Desktop Sidebar - Toggleable */}
+        <aside
+          className={`hidden md:block border-r border-gray-700 bg-black transition-all duration-300 ease-out
+          ${sidebarOpen ? "w-64" : "w-0 overflow-hidden"}`}
+        >
           <Sidebar />
         </aside>
 

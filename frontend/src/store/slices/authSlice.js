@@ -148,9 +148,9 @@ const authSlice = createSlice({
   initialState: {
     user: null, // logged in user
     isAuthenticated: false,
-    isLoading: false,
+    isLoading: false, // for login/signup/register operations
     error: null,
-    authChecked: false,
+    authChecked: false, // whether initial auth check is done
   },
   reducers: {
     clearError(state) {
@@ -163,6 +163,21 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // -------- Register --------
+      .addCase(registerUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+
       // -------- Login --------
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
@@ -178,7 +193,6 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
         state.isAuthenticated = false;
-        state.authChecked = true;
       })
 
       // -------- Logout --------
@@ -188,9 +202,9 @@ const authSlice = createSlice({
         state.authChecked = true;
       })
 
-      // -------- Fetch Current User --------
+      // -------- Fetch Current User (Initial Auth Check) --------
       .addCase(fetchCurrentUser.pending, (state) => {
-        state.isLoading = true;
+        // Don't set isLoading for initial auth check
         state.error = null;
       })
 

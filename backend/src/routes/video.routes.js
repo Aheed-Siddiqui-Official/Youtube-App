@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   deleteVideo,
   getAllVideos,
+  getMyVideos,
   getSingleVideo,
   getVideosByUser,
   updateVideo,
@@ -23,6 +24,8 @@ router.route("/upload-video").post(
 );
 
 router.route("/").get(getAllVideos);
+
+router.get("/my-videos", verifyJWT, getMyVideos);
 
 router.route("/:slug").get(verifyJWT, increaseVisits, getSingleVideo);
 
