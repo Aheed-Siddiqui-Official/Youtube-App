@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../../store/slices/authSlice";
+import { authActions } from "../../store/slices/authSlice";
+import ToastContainer, { useToast } from "../ui/ToastContainer";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -13,12 +15,27 @@ const Login = () => {
   const { user, isAuthenticated, error, isLoading } = useSelector(
     (state) => state.auth
   );
+  const { toasts, showToast, removeToast } = useToast();
 
   useEffect(() => {
     if (isAuthenticated && user) {
       navigate("/"); // redirect after login
     }
   }, [isAuthenticated, user, navigate]);
+
+  // Show error as toast notification
+  useEffect(() => {
+    if (error) {
+      showToast(error, "error", 3000);
+    }
+  }, [error, showToast]);
+
+  // Clear error when component unmounts
+  useEffect(() => {
+    return () => {
+      dispatch(authActions.clearError());
+    };
+  }, [dispatch]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -27,6 +44,8 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex flex-col overflow-hidden">
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+      
       {/* Decorative elements */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600 rounded-full filter blur-3xl opacity-10"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-600 rounded-full filter blur-3xl opacity-10"></div>
@@ -99,13 +118,6 @@ const Login = () => {
                 </button>
               </div>
             </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="bg-red-900/20 border border-red-700/50 text-red-400 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
 
             {/* Login Button */}
             <button

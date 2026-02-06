@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import VideoCard from "../components/video/VideoCard";
 import VideoPlayer from "../components/video/VideoPlayer";
 import VideoSkeleton from "../components/ui/VideoSkeleton";
+import ToastContainer, { useToast } from "../components/ui/ToastContainer";
 import { fetchAllVideos, resetAllVideos } from "../store/slices/videoSlice";
 import { Sparkles, TrendingUp } from "lucide-react";
 
@@ -14,6 +15,16 @@ const Home = () => {
   const { user } = useSelector((state) => state.auth);
   const observerTarget = useRef(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const { toasts, showToast, removeToast } = useToast();
+
+  // Handle video click with login check
+  const handleVideoClick = (video) => {
+    if (!user) {
+      showToast("Please log in to watch videos", "warning", 5000);
+      return;
+    }
+    setSelectedVideo(video);
+  };
 
   // Fetch initial videos on mount
   useEffect(() => {
@@ -51,6 +62,8 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-950 text-white">
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+      
       {/* Header Section */}
       <div className="relative px-4 sm:px-6 md:px-8 py-8 md:py-12 border-b border-gray-800/50">
         <div className="max-w-7xl mx-auto">
@@ -98,7 +111,7 @@ const Home = () => {
                   style={{
                     animationDelay: `${index * 0.1}s`
                   }}
-                  onClick={() => setSelectedVideo(video)}
+                  onClick={() => handleVideoClick(video)}
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 rounded-xl"></div>
                   <VideoCard

@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
+import { useEffect } from "react";
 import { registerUser } from "../../store/slices/authSlice.js";
+import { authActions } from "../../store/slices/authSlice.js";
+import ToastContainer, { useToast } from "../ui/ToastContainer";
 
 const Signup = () => {
   const [username, setUsername] = useState("");
@@ -17,6 +20,21 @@ const Signup = () => {
   const navigate = useNavigate();
 
   const { isLoading, error } = useSelector((state) => state.auth);
+  const { toasts, showToast, removeToast } = useToast();
+
+  // Clear error when component unmounts
+  useEffect(() => {
+    return () => {
+      dispatch(authActions.clearError());
+    };
+  }, [dispatch]);
+
+  // Show error as toast notification
+  useEffect(() => {
+    if (error) {
+      showToast(error, "error", 3000);
+    }
+  }, [error, showToast]);
 
   // Password validation function
   const validatePassword = (pwd) => {
@@ -77,28 +95,20 @@ const Signup = () => {
     formData.append("avatar", avatar);
     formData.append("coverImage", coverImage);
 
-    try {
-      // Dispatch register thunk
-      await dispatch(registerUser(formData)).unwrap();
-
-      // If successful → redirect to login
+    // Dispatch register thunk - error will be handled by useEffect below
+    const result = await dispatch(registerUser(formData));
+    
+    // Only redirect to login if registration was successful
+    if (result.type === "auth/registerUser/fulfilled") {
       navigate("/login");
-    } catch (err) {
-      // Show backend error
-      if (
-        err.toLowerCase().includes("exists") ||
-        err.toLowerCase().includes("email") ||
-        err.toLowerCase().includes("username")
-      ) {
-        alert("User already exists with this email or username");
-      } else {
-        alert(err);
-      }
     }
+    // If failed, error will be shown as toast and user stays on signup page
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex flex-col overflow-hidden">
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+      
       {/* Decorative elements */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600 rounded-full filter blur-3xl opacity-10"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-600 rounded-full filter blur-3xl opacity-10"></div>
