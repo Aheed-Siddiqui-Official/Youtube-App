@@ -1,4 +1,5 @@
 import { Subscription } from "../models/subscription.model.js";
+import { User } from "../models/user.model.js";
 import { Video } from "../models/video.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -256,3 +257,175 @@ export const getMyVideos = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, videos, "Your videos fetched successfully"));
 });
+
+export const dashBoardData = asyncHandler(async (req, res) => {
+  const channel = await User.aggregate([
+    {
+      $match: {
+        _id: req.user._id,
+      },
+    },
+    //kisna mujha sbscribe kia ha
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers",
+      },
+    },
+    //mana kisko subscribe kia ha
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo",
+      },
+    },
+    {
+      $addFields: {
+        subscribersCount: { $size: "$subscribers" },
+        channelSubscribedToCount: { $size: "$subscribedTo" },
+        isSubscribed: {
+          $cond: {
+            if: { $in: [req.user._id, "$subscribers.subscriber"] },
+            then: true,
+            else: false,
+          },
+        },
+        totalViews: { $sum: "$videos.views" },
+        totalLikes: {
+          $sum: {
+            $map: {
+              input: "$videos",
+              as: "video",
+              // Sum of likes from owned videos
+              in: { $size: "$$video.likes" },
+            },
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        fullName: 1,
+        username: 1,
+        email: 1,
+        subscribersCount: 1,
+        channelSubscribedToCount: 1,
+        isSubscribed: 1,
+        totalViews: 1,
+        totalLikes: 1,
+        avatar: 1,
+        coverImage: 1,
+      },
+    },
+  ]);
+
+  if (!channel?.length) {
+    throw new ApiError(404, "Channel does not exist");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, channel[0], "Dashboard Data fetched successfully")
+    );
+});
+
+export const toggleSubscription = asyncHandler(async (req, res) => {
+  const { channelId } = req.params;
+  const userId = req.user._id;
+
+  if (!channelId) {
+    throw new ApiError(400, "Channel ID is required");
+  }
+
+  const ownerVideo = await Video.findById(channelId);
+
+  if (userId.toString() === ownerVideo?.owner.toString()) {
+    throw new ApiError(400, "You cannot subscribe to yourself");
+  }
+
+  const existingSubscription = await Subscription.findOne({
+    subscriber: userId,
+    channel: ownerVideo?.owner,
+  });
+
+  if (existingSubscription) {
+    // Unsubscribe (Remove subscription)
+    const unSubs = await Subscription.findByIdAndDelete(
+      existingSubscription._id
+    );
+
+    if (!unSubs) {
+      throw new ApiError(500, "Failed to unsubscribe from channel"); // Handle error if failed to delete subscription. 500 means server error.
+    }
+
+    const UnsubscribedVideo = await Video.findOneAndUpdate(
+      { _id: channelId }, // Find a video where the owner matches
+      { isSubscribed: false }, // Update field
+      { new: true } // Return updated document
+    );
+
+    if (!UnsubscribedVideo) {
+      throw new ApiError(500, "Failed to UnsubscribedVideo to channel");
+    }
+    return res
+      .status(200)
+      .json(new ApiResponse(200, unSubs, "Unsubscribed successfully"));
+  } else {
+    // Subscribe (Create new subscription)
+    await Subscription.create({
+      subscriber: userId,
+      channel: ownerVideo?.owner,
+    });
+
+    const subscribedVideo = await Video.findOneAndUpdate(
+      { _id: channelId }, // Find a video where the owner matches
+      { isSubscribed: true }, // Update field
+      { new: true } // Return updated document
+    );
+
+    if (!subscribedVideo) {
+      throw new ApiError(500, "Failed to subscribe to channel");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, subscribedVideo, "Subscribed successfully"));
+  }
+});
+
+//sub and unsub not written
+
+export const userLikedVideo = asyncHandler(async (req, res) => {
+  const userId = req.body.userId;
+  console.log(userId)
+  if (!userId) {
+    throw new ApiError(401, "User not authenticated");
+  }
+  const videos = await User.findById(req.user._id).populate({
+    path: "likedVideos", // Populates likedVideos
+    populate: {
+      path: "owner", // Populates the owner field within each liked video
+    },
+  });
+
+  // console.log(videos)
+  if (!videos) {
+    throw new ApiError(404, "User Not Found");
+  }
+
+  // RETURN RESPONSE
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, videos, "Liked videos fetched successfully"));
+});
+
+//search controller will understand and implement later
+//frontend for toggle, dashboard, liked videos will do tomorrow
+//increase views middleware will do tomorrow
+//12345@aB user 2 password
