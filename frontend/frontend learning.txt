@@ -41,3 +41,12 @@ thumbnailUrl = videoURL?.url
 
 { new: true } ensures updatedVideo is the updated document, not the old one.
 
+Summary – in very simple words
+This code:
+
+Catches “401 – you are logged out” errors
+Tries to silently get a new login token
+If successful → retries your original request
+If many requests fail at once → only one refresh happens, others wait
+If refresh fails → logs you out
+Prevents you from seeing “please login again” popups every few seconds
