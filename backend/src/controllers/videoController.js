@@ -116,28 +116,29 @@ export const getAllVideos = asyncHandler(async (req, res) => {
 });
 
 export const getSingleVideo = asyncHandler(async (req, res) => {
-  const video = await Video.findOne({ slug: req?.params?.slug }).populate(
-    "owner"
-  );
+  const video =
+    req.video || (await Video.findById(req.params.videoId).populate("owner"));
 
-  if (!video) {
-    throw new ApiError(404, "Video not found");
-  }
+  if (!video) throw new ApiError(404, "Video not found");
 
   let isSubscribed = false;
-
   if (req.user) {
-    const subscription = await Subscription.findOne({
+    const sub = await Subscription.exists({
       subscriber: req.user._id,
-      channel: video.owner._id,
+      channel: video.owner,
     });
-
-    isSubscribed = !!subscription;
+    isSubscribed = !!sub;
   }
 
-  return res
+  res
     .status(200)
-    .json(new ApiResponse(200, video, "Video fetched successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        { ...video.toObject(), isSubscribed },
+        "Video fetched"
+      )
+    );
 });
 
 export const deleteVideo = asyncHandler(async (req, res) => {
@@ -390,18 +391,26 @@ export const toggleLike = asyncHandler(async (req, res) => {
 
   const existingLike = await Like.findOne({ video: videoId, likedBy: userId });
 
+  let isLikedNow;
+
   if (existingLike) {
-    await existingLike.deleteOne();
+    await Like.deleteOne({ _id: existingLike._id });
+    isLikedNow = false;
   } else {
-    await Like.create({ video: videoId, likedBy: userId, video: videoId });
+    await Like.create({ video: videoId, likedBy: userId });
+    isLikedNow = true;
   }
 
   const likesCount = await Like.countDocuments({ video: videoId });
 
+  // Also update the video document if you keep a likesCount field there (recommended for performance)
+  // await Video.findByIdAndUpdate(videoId, { likesCount });
+
   return res.status(200).json(
     new ApiResponse(200, {
-      message: existingLike ? "Video unliked" : "Video liked",
+      message: isLikedNow ? "Video liked" : "Video unliked",
       likesCount,
+      isLiked: isLikedNow,
     })
   );
 });
@@ -436,7 +445,5 @@ export const searchVideos = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, videos, "Videos fetched successfully"));
 });
 
-//increase views middleware will do tomorrow and understand
 //12345@aB user 2 password
-//home, dash, likepage user porfile should open
 //dynamic likes

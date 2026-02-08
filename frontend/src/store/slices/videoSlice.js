@@ -125,9 +125,15 @@ export const toggleLike = createAsyncThunk(
   async (videoId, { rejectWithValue }) => {
     try {
       const res = await api.post(`/api/v1/videos/like/${videoId}`);
-      return { videoId, message: res.data.data.message };
+      return {
+        videoId,
+        likesCount: res.data.data.likesCount,
+        isLiked: res.data.data.isLiked,
+      };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to toggle like",
+      );
     }
   },
 );
@@ -308,16 +314,29 @@ const videoSlice = createSlice({
         state.status = "failed";
       })
       .addCase(toggleLike.fulfilled, (state, action) => {
-        // Optional: update likedVideos locally
-        const videoId = action.payload.videoId;
-        const exists = state.likedVideos.find((v) => v._id === videoId);
-        if (exists) {
-          state.likedVideos = state.likedVideos.filter(
-            (v) => v._id !== videoId,
-          );
-        } else {
-          // could re-fetch liked videos for consistency
+        const { videoId, likesCount, isLiked } = action.payload;
+        if (state.currentVideo?._id === videoId) {
+          state.currentVideo.likesCount = likesCount;
+          // state.currentVideo.isLiked = isLiked; // if you store it
         }
+
+        // Optional: update in lists too (Home grid, Liked page, etc.)
+        const updateList = (listName) => {
+          const videos = state[listName];
+          if (!videos) return;
+          const idx = videos.findIndex((v) => v._id === videoId);
+          if (idx !== -1) {
+            videos[idx] = { ...videos[idx], likesCount };
+          }
+        };
+
+        updateList("allVideos");
+        updateList("myVideos");
+        updateList("likedVideos");
+      })
+      .addCase(fetchSingleVideo.fulfilled, (state, action) => {
+        // Optional: you can store it in a separate field
+        state.currentVideo = action.payload;
       });
   },
 });

@@ -140,6 +140,20 @@ export const updateCoverImage = createAsyncThunk(
   },
 );
 
+export const fetchWatchHistory = createAsyncThunk(
+  "videos/fetchWatchHistory",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.get("/api/v1/users/history");
+      return res.data.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch watch history",
+      );
+    }
+  },
+);
+
 // --------------------
 // Slice
 // --------------------
@@ -148,9 +162,11 @@ const authSlice = createSlice({
   initialState: {
     user: null, // logged in user
     isAuthenticated: false,
-    isLoading: false, // for login/signup/register operations
+    isLoading: false,
     error: null,
-    authChecked: false, // whether initial auth check is done
+    authChecked: false,
+    watchHistory: [],
+    watchHistoryStatus: "idle",
   },
   reducers: {
     clearError(state) {
@@ -229,6 +245,17 @@ const authSlice = createSlice({
       })
       .addCase(changePassword.fulfilled, (state, action) => {
         state.error = null; // clear error
+      })
+      .addCase(fetchWatchHistory.pending, (state) => {
+        state.watchHistoryStatus = "loading";
+      })
+      .addCase(fetchWatchHistory.fulfilled, (state, action) => {
+        state.watchHistoryStatus = "succeeded";
+        state.watchHistory = action.payload;
+      })
+      .addCase(fetchWatchHistory.rejected, (state, action) => {
+        state.watchHistoryStatus = "failed";
+        state.error = action.payload;
       });
   },
 });

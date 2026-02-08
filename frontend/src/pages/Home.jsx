@@ -1,5 +1,6 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useSearchParams } from "react-router-dom";
 import VideoCard from "../components/video/VideoCard";
 import VideoPlayer from "../components/video/VideoPlayer";
 import VideoSkeleton from "../components/ui/VideoSkeleton";
@@ -9,30 +10,38 @@ import { Sparkles, TrendingUp } from "lucide-react";
 
 const Home = () => {
   const dispatch = useDispatch();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const { allVideos, loading, loadingMore, hasMore, currentPage } = useSelector(
     (state) => state.videos,
   );
   const { user } = useSelector((state) => state.auth);
-  const observerTarget = useRef(null);
-  const [selectedVideo, setSelectedVideo] = useState(null);
   const { toasts, showToast, removeToast } = useToast();
 
-  // Handle video click with login check
+  const videoIdFromUrl = searchParams.get("v");
+  const selectedVideo = allVideos.find((v) => v._id === videoIdFromUrl) || null;
+
+  const observerTarget = useRef(null);
+
   const handleVideoClick = (video) => {
     if (!user) {
       showToast("Please log in to watch videos", "warning", 5000);
       return;
     }
-    setSelectedVideo(video);
+    setSearchParams({ v: video._id });
   };
 
-  // Fetch initial videos on mount
+  const handleClosePlayer = () => {
+    setSearchParams({});
+  };
+
+  // Fetch initial videos
   useEffect(() => {
     dispatch(resetAllVideos());
     dispatch(fetchAllVideos({ page: 1, limit: 10 }));
   }, [dispatch]);
 
-  // Infinite scroll observer callback
+  // Infinite scroll observer
   const handleObserverEntry = useCallback(
     (entries) => {
       if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
@@ -42,7 +51,6 @@ const Home = () => {
     [hasMore, loadingMore, loading, currentPage, dispatch],
   );
 
-  // Set up Intersection Observer for infinite scroll
   useEffect(() => {
     const observer = new IntersectionObserver(handleObserverEntry, {
       threshold: 0.1,
@@ -67,7 +75,6 @@ const Home = () => {
       {/* Header Section */}
       <div className="relative px-4 sm:px-6 md:px-8 py-8 md:py-12 border-b border-gray-800/50">
         <div className="max-w-7xl mx-auto">
-          {/* Gradient Background Elements */}
           <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-purple-600/10 to-transparent rounded-full blur-3xl -z-10"></div>
           <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-pink-600/10 to-transparent rounded-full blur-3xl -z-10"></div>
 
@@ -112,9 +119,7 @@ const Home = () => {
                 <div
                   key={video._id}
                   className="relative group rounded-xl overflow-hidden transform transition-all duration-300 hover:scale-105 cursor-pointer"
-                  style={{
-                    animationDelay: `${index * 0.1}s`,
-                  }}
+                  style={{ animationDelay: `${index * 0.1}s` }}
                   onClick={() => handleVideoClick(video)}
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 rounded-xl"></div>
@@ -131,7 +136,6 @@ const Home = () => {
               ))}
             </div>
 
-            {/* Infinite scroll trigger element */}
             <div
               ref={observerTarget}
               className="flex justify-center py-12 md:py-16"
@@ -151,12 +155,12 @@ const Home = () => {
                         stroke="currentColor"
                         strokeWidth="4"
                         fill="none"
-                      ></circle>
+                      />
                       <path
                         className="opacity-75"
                         fill="currentColor"
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
+                      />
                     </svg>
                   </div>
                   <p className="text-gray-400 text-sm">
@@ -164,6 +168,7 @@ const Home = () => {
                   </p>
                 </div>
               )}
+
               {!hasMore && allVideos.length > 0 && (
                 <div className="text-center">
                   <p className="text-gray-500 text-sm font-medium">
@@ -178,12 +183,11 @@ const Home = () => {
           </>
         )}
 
-        {/* Video Player Modal */}
         {selectedVideo && (
           <VideoPlayer
             video={selectedVideo}
             user={user}
-            onClose={() => setSelectedVideo(null)}
+            onClose={handleClosePlayer}
           />
         )}
       </div>

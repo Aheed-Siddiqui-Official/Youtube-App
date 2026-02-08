@@ -356,3 +356,4 @@ $addToSet donot cause duplicates in watch history
 
 static and dynamic routes
 
+use search params

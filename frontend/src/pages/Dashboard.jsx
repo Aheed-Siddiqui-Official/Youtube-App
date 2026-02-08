@@ -1,5 +1,6 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import VideoCard from "../components/video/VideoCard.jsx";
 import VideoPlayer from "../components/video/VideoPlayer.jsx";
 import VideoSkeleton from "../components/ui/VideoSkeleton.jsx";
@@ -14,15 +15,19 @@ import { Upload, Trash2, Settings, Play, MoreVertical } from "lucide-react";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const { myVideos, loading } = useSelector((state) => state.videos);
   const { dashboard } = useSelector((state) => state.videos);
+
+  const videoIdFromUrl = searchParams.get("v");
+  const selectedVideo = myVideos.find((v) => v._id === videoIdFromUrl) || null;
 
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [deleteModal, setDeleteModal] = useState(null);
   const [updateModal, setUpdateModal] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
-  const [selectedVideo, setSelectedVideo] = useState(null);
   const [updateData, setUpdateData] = useState({
     title: "",
     description: "",
@@ -41,7 +46,7 @@ const Dashboard = () => {
       dispatch(fetchMyVideos());
       dispatch(fetchDashboardData());
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, dispatch]);
 
   const handleFileChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.files[0] }));
@@ -67,6 +72,14 @@ const Dashboard = () => {
       video: null,
       thumbnail: null,
     });
+  };
+
+  const handleVideoClick = (video) => {
+    setSearchParams({ v: video._id });
+  };
+
+  const handleClosePlayer = () => {
+    setSearchParams({});
   };
 
   if (!isAuthenticated) {
@@ -260,6 +273,7 @@ const Dashboard = () => {
             {myVideos.length} video{myVideos.length !== 1 ? "s" : ""}
           </span>
         </div>
+
         {loading ? (
           <VideoSkeleton count={8} />
         ) : myVideos.length === 0 ? (
@@ -278,7 +292,7 @@ const Dashboard = () => {
               <div
                 key={video._id}
                 className="relative rounded-xl overflow-hidden cursor-pointer"
-                onClick={() => setSelectedVideo(video)}
+                onClick={() => handleVideoClick(video)}
               >
                 <VideoCard
                   thumbnail={video.thumbnail}
@@ -465,7 +479,7 @@ const Dashboard = () => {
         <VideoPlayer
           video={selectedVideo}
           user={user}
-          onClose={() => setSelectedVideo(null)}
+          onClose={handleClosePlayer}
         />
       )}
     </div>
