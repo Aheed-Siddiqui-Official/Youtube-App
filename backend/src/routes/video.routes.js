@@ -1,10 +1,15 @@
 import { Router } from "express";
 import {
+  dashBoardData,
   deleteVideo,
   getAllVideos,
+  getLikedVideos,
   getMyVideos,
   getSingleVideo,
+  getSubscribers,
   getVideosByUser,
+  toggleLike,
+  toggleSubscription,
   updateVideo,
   uploadVideo,
 } from "../controllers/videoController.js";
@@ -14,7 +19,12 @@ import { increaseVisits } from "../middlewares/increaseViews.middleware.js";
 
 const router = Router();
 
-router.route("/upload-video").post(
+/////////////////////////
+// STATIC ROUTES
+/////////////////////////
+
+router.post(
+  "/upload-video",
   verifyJWT,
   upload.fields([
     { name: "video", maxCount: 1 },
@@ -23,18 +33,33 @@ router.route("/upload-video").post(
   uploadVideo
 );
 
-router.route("/").get(getAllVideos);
+router.get("/", getAllVideos);
 
 router.get("/my-videos", verifyJWT, getMyVideos);
 
-router.route("/:slug").get(verifyJWT, increaseVisits, getSingleVideo);
+router.get("/like", verifyJWT, getLikedVideos);
+router.post("/like/:videoId", verifyJWT, toggleLike);
 
-router.route("/:id").delete(verifyJWT, deleteVideo);
+router.get("/dashboard/data", verifyJWT, dashBoardData);
 
-router.route("/user/:username").get(getVideosByUser);
+router.post("/subscription/:channelId", verifyJWT, toggleSubscription);
+router.get("/subscription/:channelId/count", getSubscribers);
 
-router
-  .route("/user/update/:id")
-  .patch(verifyJWT, upload.single("video", updateVideo));
+router.get("/user/:username", getVideosByUser);
+
+router.patch(
+  "/user/update/:id",
+  verifyJWT,
+  upload.single("video"),
+  updateVideo
+);
+
+/////////////////////////
+// DYNAMIC ROUTES
+/////////////////////////
+
+router.get("/:videoId", verifyJWT, increaseVisits, getSingleVideo);
+
+router.delete("/:id", verifyJWT, deleteVideo);
 
 export default router;

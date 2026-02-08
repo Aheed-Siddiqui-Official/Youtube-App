@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Subscription } from "../models/subscription.model.js";
 import { User } from "../models/user.model.js";
 import { Video } from "../models/video.model.js";
@@ -5,6 +6,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { Like } from "../models/like.model.js";
 
 export const uploadVideo = asyncHandler(async (req, res) => {
   const { title, description, category, isPublic } = req.body;
@@ -239,7 +241,7 @@ export const updateVideo = asyncHandler(async (req, res) => {
 
 export const getMyVideos = asyncHandler(async (req, res) => {
   // req.user comes from auth middleware
-  const userId = req.user._id;
+  const subscriberId = req.user._id;
 
   const { sort } = req.query;
 
@@ -249,7 +251,7 @@ export const getMyVideos = asyncHandler(async (req, res) => {
     sortOption = { createdAt: 1 };
   }
 
-  const videos = await Video.find({ owner: userId })
+  const videos = await Video.find({ owner: subscriberId })
     .sort(sortOption)
     .populate("owner", "username avatar"); // don't dump entire user doc
 
@@ -336,96 +338,105 @@ export const dashBoardData = asyncHandler(async (req, res) => {
 
 export const toggleSubscription = asyncHandler(async (req, res) => {
   const { channelId } = req.params;
-  const userId = req.user._id;
+  const subscriberId = req.user._id;
 
-  if (!channelId) {
-    throw new ApiError(400, "Channel ID is required");
+  if (!mongoose.Types.ObjectId.isValid(channelId)) {
+    throw new ApiError(400, "Invalid channel id");
   }
 
-  const ownerVideo = await Video.findById(channelId);
-
-  if (userId.toString() === ownerVideo?.owner.toString()) {
+  if (subscriberId.toString() === channelId) {
     throw new ApiError(400, "You cannot subscribe to yourself");
   }
 
-  const existingSubscription = await Subscription.findOne({
-    subscriber: userId,
-    channel: ownerVideo?.owner,
+  const channelExists = await User.exists({ _id: channelId });
+
+  if (!channelExists) {
+    throw new ApiError(404, "Channel not found");
+  }
+
+  const deleted = await Subscription.findOneAndDelete({
+    subscriber: subscriberId,
+    channel: channelId,
   });
 
-  if (existingSubscription) {
-    // Unsubscribe (Remove subscription)
-    const unSubs = await Subscription.findByIdAndDelete(
-      existingSubscription._id
-    );
-
-    if (!unSubs) {
-      throw new ApiError(500, "Failed to unsubscribe from channel"); // Handle error if failed to delete subscription. 500 means server error.
-    }
-
-    const UnsubscribedVideo = await Video.findOneAndUpdate(
-      { _id: channelId }, // Find a video where the owner matches
-      { isSubscribed: false }, // Update field
-      { new: true } // Return updated document
-    );
-
-    if (!UnsubscribedVideo) {
-      throw new ApiError(500, "Failed to UnsubscribedVideo to channel");
-    }
+  if (deleted) {
     return res
       .status(200)
-      .json(new ApiResponse(200, unSubs, "Unsubscribed successfully"));
-  } else {
-    // Subscribe (Create new subscription)
-    await Subscription.create({
-      subscriber: userId,
-      channel: ownerVideo?.owner,
-    });
-
-    const subscribedVideo = await Video.findOneAndUpdate(
-      { _id: channelId }, // Find a video where the owner matches
-      { isSubscribed: true }, // Update field
-      { new: true } // Return updated document
-    );
-
-    if (!subscribedVideo) {
-      throw new ApiError(500, "Failed to subscribe to channel");
-    }
-
-    return res
-      .status(200)
-      .json(new ApiResponse(200, subscribedVideo, "Subscribed successfully"));
+      .json(
+        new ApiResponse(200, { subscribed: false }, "Unsubscribed successfully")
+      );
   }
-});
-
-//sub and unsub not written
-
-export const userLikedVideo = asyncHandler(async (req, res) => {
-  const userId = req.body.userId;
-  console.log(userId)
-  if (!userId) {
-    throw new ApiError(401, "User not authenticated");
-  }
-  const videos = await User.findById(req.user._id).populate({
-    path: "likedVideos", // Populates likedVideos
-    populate: {
-      path: "owner", // Populates the owner field within each liked video
-    },
+  await Subscription.create({
+    subscriber: subscriberId,
+    channel: channelId,
   });
-
-  // console.log(videos)
-  if (!videos) {
-    throw new ApiError(404, "User Not Found");
-  }
-
-  // RETURN RESPONSE
 
   return res
     .status(200)
-    .json(new ApiResponse(200, videos, "Liked videos fetched successfully"));
+    .json(
+      new ApiResponse(200, { subscribed: true }, "Subscribed successfully")
+    );
+});
+
+export const getSubscribers = asyncHandler(async (req, res) => {
+  const { channelId } = req.params;
+  const count = await Subscription.countDocuments({ channel: channelId });
+  res.status(200).json({ count });
+});
+
+export const toggleLike = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const { videoId } = req.params;
+
+  const existingLike = await Like.findOne({ video: videoId, likedBy: userId });
+
+  if (existingLike) {
+    await existingLike.deleteOne();
+  } else {
+    await Like.create({ video: videoId, likedBy: userId, video: videoId });
+  }
+
+  const likesCount = await Like.countDocuments({ video: videoId });
+
+  return res.status(200).json(
+    new ApiResponse(200, {
+      message: existingLike ? "Video unliked" : "Video liked",
+      likesCount,
+    })
+  );
+});
+
+export const getLikedVideos = asyncHandler(async (req, res) => {
+  const likes = await Like.find({ likedBy: req.user._id })
+    .populate({
+      path: "video",
+      populate: { path: "owner" },
+    })
+    .sort({ createdAt: -1 });
+
+  const videos = likes.map((like) => like.video).filter(Boolean);
+
+  return res.status(200).json(new ApiResponse(200, { likedVideos: videos }));
 });
 
 //search controller will understand and implement later
-//frontend for toggle, dashboard, liked videos will do tomorrow
-//increase views middleware will do tomorrow
+export const searchVideos = asyncHandler(async (req, res) => {
+  const { q } = req.query;
+
+  if (!q) {
+    throw new ApiError(400, "Search query is required");
+  }
+
+  const videos = await Video.find({
+    title: { $regex: q, $options: "i" },
+  }).limit(10);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, videos, "Videos fetched successfully"));
+});
+
+//increase views middleware will do tomorrow and understand
 //12345@aB user 2 password
+//home, dash, likepage user porfile should open
+//dynamic likes

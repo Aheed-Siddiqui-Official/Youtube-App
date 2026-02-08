@@ -8,6 +8,7 @@ import {
   uploadVideo,
   deleteVideo,
   updateVideo,
+  fetchDashboardData,
 } from "../store/slices/videoSlice.js";
 import { Upload, Trash2, Settings, Play, MoreVertical } from "lucide-react";
 
@@ -15,6 +16,7 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const { myVideos, loading } = useSelector((state) => state.videos);
+  const { dashboard } = useSelector((state) => state.videos);
 
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [deleteModal, setDeleteModal] = useState(null);
@@ -37,6 +39,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(fetchMyVideos());
+      dispatch(fetchDashboardData());
     }
   }, [isAuthenticated]);
 
@@ -48,13 +51,14 @@ const Dashboard = () => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleUpload = (e) => {
+  const handleUpload = async (e) => {
     e.preventDefault();
     const data = new FormData();
     Object.keys(formData).forEach((key) => {
       if (formData[key]) data.append(key, formData[key]);
     });
-    dispatch(uploadVideo(data));
+    await dispatch(uploadVideo(data)).unwrap();
+    dispatch(fetchDashboardData());
     setShowUploadForm(false);
     setFormData({
       title: "",
@@ -119,7 +123,9 @@ const Dashboard = () => {
             </div>
             <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4 mb-3 sm:mb-4 text-sm text-gray-300">
               <div className="flex items-center gap-1">
-                <span className="text-white font-bold text-lg">0</span>
+                <span className="text-white font-bold text-lg">
+                  {dashboard?.subscribersCount || 0}
+                </span>
                 <span className="text-gray-400">Subscribers</span>
               </div>
               <div className="hidden sm:block w-1 h-1 rounded-full bg-gray-600"></div>
@@ -337,8 +343,9 @@ const Dashboard = () => {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  dispatch(deleteVideo(deleteModal));
+                onClick={async () => {
+                  await dispatch(deleteVideo(deleteModal)).unwrap();
+                  dispatch(fetchDashboardData());
                   setDeleteModal(null);
                 }}
                 className="flex-1 bg-red-600 hover:bg-red-700 px-4 py-2.5 rounded-lg text-white font-medium transition-all"
@@ -357,9 +364,9 @@ const Dashboard = () => {
             <h3 className="text-2xl font-bold text-white mb-6">Update Video</h3>
 
             <form
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                dispatch(
+                await dispatch(
                   updateVideo({
                     videoId: updateModal,
                     title: updateData.title,
@@ -367,6 +374,7 @@ const Dashboard = () => {
                     videoFile: updateData.videoFile,
                   }),
                 );
+                dispatch(fetchDashboardData());
                 setUpdateModal(null);
               }}
               className="space-y-5"

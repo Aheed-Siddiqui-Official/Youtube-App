@@ -1,5 +1,21 @@
 import { useRef, useState, useEffect } from "react";
-import { X, Play, Pause, Volume2, Settings, ThumbsUp, Share2, Bookmark } from "lucide-react";
+import {
+  X,
+  Play,
+  Pause,
+  Volume2,
+  Settings,
+  ThumbsUp,
+  Share2,
+  Bookmark,
+} from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchLikedVideos,
+  fetchSubscriberCount,
+  toggleLike,
+  toggleSubscription,
+} from "../../store/slices/videoSlice.js";
 
 const VideoPlayer = ({ video, user, onClose }) => {
   const videoRef = useRef(null);
@@ -10,8 +26,38 @@ const VideoPlayer = ({ video, user, onClose }) => {
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const subscriberCount = useSelector(
+    (state) => state.videos.subscriberCounts?.[video.owner._id] || 0,
+  );
 
   const speedOptions = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+  const dispatch = useDispatch();
+
+  const { subscribedChannels } = useSelector((state) => state.videos);
+  const { user: currentUser } = useSelector((state) => state.auth);
+
+  const isSubscribed = subscribedChannels?.includes(video.owner._id);
+
+  const { likedVideos } = useSelector((state) => state.videos);
+  const isLiked = likedVideos.some((v) => v._id === video._id);
+
+  useEffect(() => {
+    dispatch(fetchSubscriberCount(video.owner._id));
+  }, [video.owner._id, subscribedChannels]);
+
+  const handleSubscribe = async () => {
+    if (currentUser._id === video.owner._id)
+      return alert("You cannot subscribe to yourself");
+
+    await dispatch(toggleSubscription(video.owner._id));
+  };
+
+  const handleLikeClick = async () => {
+    await dispatch(toggleLike(video._id)).unwrap();
+    // refresh liked videos
+    dispatch(fetchLikedVideos());
+  };
 
   // Handle play/pause
   const togglePlay = () => {
@@ -80,7 +126,7 @@ const VideoPlayer = ({ video, user, onClose }) => {
     const hours = Math.floor(time / 3600);
     const minutes = Math.floor((time % 3600) / 60);
     const seconds = Math.floor(time % 60);
-    
+
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
     }
@@ -234,19 +280,35 @@ const VideoPlayer = ({ video, user, onClose }) => {
               className="w-12 h-12 rounded-full object-cover"
             />
             <div>
-              <p className="text-white font-semibold">{video.owner?.username}</p>
-              <p className="text-gray-400 text-sm">0 subscribers</p>
+              <p className="text-white font-semibold">
+                {video.owner?.username}
+              </p>
+              {subscriberCount} subscriber{subscriberCount !== 1 ? "s" : ""}
             </div>
-            <button className="bg-white text-black px-6 py-2 rounded-full font-semibold hover:bg-gray-200 transition-all">
-              Subscribe
+            <button
+              onClick={handleSubscribe}
+              className={`px-6 py-2 rounded-full font-semibold transition-all ${
+                isSubscribed
+                  ? "bg-gray-700 text-white hover:bg-gray-600"
+                  : "bg-red-600 text-white hover:bg-red-700"
+              }`}
+            >
+              {isSubscribed ? "Subscribed" : "Subscribe"}
             </button>
           </div>
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/50 hover:bg-gray-700 text-white transition-all">
+            <button
+              onClick={handleLikeClick}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
+                isLiked
+                  ? "bg-red-600 text-white"
+                  : "bg-gray-800/50 text-white hover:bg-gray-700"
+              }`}
+            >
               <ThumbsUp size={20} />
-              <span className="text-sm">0</span>
+              <span className="text-sm">{isLiked ? "Liked" : "Like"}</span>
             </button>
             <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/50 hover:bg-gray-700 text-white transition-all">
               <Share2 size={20} />
@@ -263,7 +325,8 @@ const VideoPlayer = ({ video, user, onClose }) => {
         <div className="mt-6 space-y-4">
           {/* Stats */}
           <div className="text-gray-400 text-sm">
-            <span className="font-semibold text-white">{video.views || 0}</span> views •{" "}
+            <span className="font-semibold text-white">{video.views || 0}</span>{" "}
+            views •{" "}
             <span>{new Date(video.createdAt).toLocaleDateString()}</span>
           </div>
 

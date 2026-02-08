@@ -10,7 +10,7 @@ import { Sparkles, TrendingUp } from "lucide-react";
 const Home = () => {
   const dispatch = useDispatch();
   const { allVideos, loading, loadingMore, hasMore, currentPage } = useSelector(
-    (state) => state.videos
+    (state) => state.videos,
   );
   const { user } = useSelector((state) => state.auth);
   const observerTarget = useRef(null);
@@ -39,7 +39,7 @@ const Home = () => {
         dispatch(fetchAllVideos({ page: currentPage, limit: 10 }));
       }
     },
-    [hasMore, loadingMore, loading, currentPage, dispatch]
+    [hasMore, loadingMore, loading, currentPage, dispatch],
   );
 
   // Set up Intersection Observer for infinite scroll
@@ -63,14 +63,14 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-950 text-white">
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
-      
+
       {/* Header Section */}
       <div className="relative px-4 sm:px-6 md:px-8 py-8 md:py-12 border-b border-gray-800/50">
         <div className="max-w-7xl mx-auto">
           {/* Gradient Background Elements */}
           <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-purple-600/10 to-transparent rounded-full blur-3xl -z-10"></div>
           <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-pink-600/10 to-transparent rounded-full blur-3xl -z-10"></div>
-          
+
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-3 mb-3">
@@ -79,7 +79,9 @@ const Home = () => {
                   For You
                 </h1>
               </div>
-              <p className="text-gray-400 text-sm sm:text-base ml-10">Discover videos from creators worldwide</p>
+              <p className="text-gray-400 text-sm sm:text-base ml-10">
+                Discover videos from creators worldwide
+              </p>
             </div>
             <div className="hidden md:block">
               <div className="bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-600/30 rounded-lg p-4 backdrop-blur-sm">
@@ -98,18 +100,20 @@ const Home = () => {
         ) : allVideos.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Sparkles size={48} className="text-purple-500 mb-4 opacity-50" />
-            <p className="text-gray-300 text-xl font-medium mb-2">No videos available</p>
+            <p className="text-gray-300 text-xl font-medium mb-2">
+              No videos available
+            </p>
             <p className="text-gray-500">Check back soon for new content</p>
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
               {allVideos.map((video, index) => (
-                <div 
-                  key={video._id} 
+                <div
+                  key={video._id}
                   className="relative group rounded-xl overflow-hidden transform transition-all duration-300 hover:scale-105 cursor-pointer"
                   style={{
-                    animationDelay: `${index * 0.1}s`
+                    animationDelay: `${index * 0.1}s`,
                   }}
                   onClick={() => handleVideoClick(video)}
                 >
@@ -128,22 +132,46 @@ const Home = () => {
             </div>
 
             {/* Infinite scroll trigger element */}
-            <div ref={observerTarget} className="flex justify-center py-12 md:py-16">
+            <div
+              ref={observerTarget}
+              className="flex justify-center py-12 md:py-16"
+            >
               {loadingMore && (
                 <div className="text-center">
                   <div className="inline-flex items-center justify-center w-12 h-12 mb-3">
-                    <svg className="animate-spin h-12 w-12 text-purple-600" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin h-12 w-12 text-purple-600"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                   </div>
-                  <p className="text-gray-400 text-sm">Loading more videos...</p>
+                  <p className="text-gray-400 text-sm">
+                    Loading more videos...
+                  </p>
                 </div>
               )}
               {!hasMore && allVideos.length > 0 && (
                 <div className="text-center">
-                  <p className="text-gray-500 text-sm font-medium">You've reached the end</p>
-                  <p className="text-gray-600 text-xs mt-1">No more videos to load</p>
+                  <p className="text-gray-500 text-sm font-medium">
+                    You've reached the end
+                  </p>
+                  <p className="text-gray-600 text-xs mt-1">
+                    No more videos to load
+                  </p>
                 </div>
               )}
             </div>
@@ -152,10 +180,10 @@ const Home = () => {
 
         {/* Video Player Modal */}
         {selectedVideo && (
-          <VideoPlayer 
-            video={selectedVideo} 
+          <VideoPlayer
+            video={selectedVideo}
             user={user}
-            onClose={() => setSelectedVideo(null)} 
+            onClose={() => setSelectedVideo(null)}
           />
         )}
       </div>

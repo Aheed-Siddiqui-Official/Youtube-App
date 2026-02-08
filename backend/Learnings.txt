@@ -340,4 +340,19 @@ aggregation pipelines will be used in like controller
 if we want to apply auth route in whole file we can write app.use(verifyJWT)
 
 
+const videos = await Video.find({
+    title: { $regex: q, $options: "i" },
+  }).limit(10);
+
+  regex find the word q in sentence e.g. Node
+
+and i makes the word searchable for all type of word formatting 
+e.g. node, Node, nODe, NODE etc
+
+likes.countDocuments mongodb keyword to sum all likes of a video
+
+$push cause duplicates in watch history
+$addToSet donot cause duplicates in watch history
+
+static and dynamic routes
 
