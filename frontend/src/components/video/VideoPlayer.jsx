@@ -17,6 +17,10 @@ import {
   toggleSubscription,
   fetchSingleVideo,
 } from "../../store/slices/videoSlice.js";
+import {
+  fetchPlaylists,
+  toggleVideoInPlaylist,
+} from "../../store/slices/playlistSlice.js";
 
 const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
   const videoRef = useRef(null);
@@ -29,12 +33,17 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
 
-  // ── Redux selectors ────────────────────────────────────────────────
+  // Redux selectors
   const { currentVideo, loading } = useSelector((state) => state.videos);
   const { subscribedChannels } = useSelector((state) => state.videos);
   const { user: currentUser } = useSelector((state) => state.auth);
   const { likedVideos } = useSelector((state) => state.videos);
+
+  const { playlists = [], loading: playlistLoading } = useSelector(
+    (state) => state.playlist,
+  );
 
   const displayedVideo = currentVideo || initialVideo;
 
@@ -48,17 +57,17 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
 
   const speedOptions = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
-  // ── Fetch fresh data when modal opens ───────────────────────────
+  // Fetch data when modal opens
   useEffect(() => {
     if (initialVideo?._id) {
       dispatch(fetchSingleVideo(initialVideo._id));
       dispatch(fetchSubscriberCount(initialVideo.owner?._id));
+      dispatch(fetchLikedVideos());
+      // Always refresh playlists when player opens
+      dispatch(fetchPlaylists());
     }
 
-    // Reset player state when video changes
     return () => {
-      setIsPlaying(false);
-      setCurrentTime(0);
       if (videoRef.current) {
         videoRef.current.pause();
         videoRef.current.currentTime = 0;
@@ -76,15 +85,18 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
 
   const handleLikeClick = async () => {
     if (!displayedVideo?._id) return;
-
     try {
       await dispatch(toggleLike(displayedVideo._id)).unwrap();
-      // Refresh liked videos list to keep isLiked accurate
       dispatch(fetchLikedVideos());
     } catch (err) {
-      console.error("Like toggle failed:", err);
-      alert("Failed to update like. Please try again.");
+      alert("Failed to update like.");
     }
+  };
+
+  // Open playlist modal + force refresh playlists right before showing
+  const handleSaveClick = () => {
+    dispatch(fetchPlaylists()); // Refresh immediately
+    setShowPlaylistModal(true);
   };
 
   // ── Video controls ─────────────────────────────────────────────
@@ -363,8 +375,13 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
               <Share2 size={18} /> Share
             </button>
 
-            <button className="flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full bg-gray-800/70 hover:bg-gray-700 text-white transition-all text-sm sm:text-base">
-              <Bookmark size={18} /> Save
+            {/* SAVE BUTTON */}
+            <button
+              onClick={handleSaveClick}
+              className="flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full bg-gray-800/70 hover:bg-gray-700 text-white transition-all text-sm sm:text-base"
+            >
+              <Bookmark size={18} />
+              Save
             </button>
           </div>
         </div>
@@ -385,6 +402,88 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
           </div>
         </div>
       </div>
+
+      {/* PLAYLIST MODAL */}
+      {showPlaylistModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] overflow-y-auto">
+          <div className="bg-gray-900 p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-lg mx-4 border border-gray-700">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white">Add to Playlist</h2>
+              <button
+                onClick={() => setShowPlaylistModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X size={28} />
+              </button>
+            </div>
+
+            {playlistLoading ? (
+              <div className="text-center py-10">
+                <div className="w-12 h-12 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-300">Loading your playlists...</p>
+              </div>
+            ) : playlists.length === 0 ? (
+              <div className="text-center py-10">
+                <p className="text-gray-400 text-lg mb-6">
+                  You don't have any playlists yet.
+                </p>
+                <button
+                  onClick={() => setShowPlaylistModal(false)}
+                  className="px-8 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium transition"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                {playlists.map((playlist) => {
+                  const isInPlaylist =
+                    playlist.playlistVideos?.some(
+                      (v) => v._id === displayedVideo._id,
+                    ) || false;
+
+                  return (
+                    <div
+                      key={playlist._id}
+                      className="flex justify-between items-center p-4 bg-gray-800 rounded-xl hover:bg-gray-700 transition"
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium text-white">
+                          {playlist.playlistName}
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          {playlist.playlistVideos?.length || 0} videos
+                        </p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          await dispatch(
+                            toggleVideoInPlaylist({
+                              playlistId: playlist._id,
+                              slug: displayedVideo.slug,
+                            }),
+                          );
+                          // Force refresh after toggle
+                          dispatch(fetchPlaylists());
+                          // Close modal after action
+                          setShowPlaylistModal(false);
+                        }}
+                        className={`px-6 py-2 rounded-full text-sm font-medium transition ${
+                          isInPlaylist
+                            ? "bg-red-600 hover:bg-red-700 text-white"
+                            : "bg-cyan-600 hover:bg-cyan-700 text-white"
+                        }`}
+                      >
+                        {isInPlaylist ? "Remove" : "Add"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,9 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
-import { useEffect } from "react";
-import { registerUser } from "../../store/slices/authSlice.js";
-import { authActions } from "../../store/slices/authSlice.js";
+import { registerUser, authActions } from "../../store/slices/authSlice.js";
 import ToastContainer, { useToast } from "../ui/ToastContainer";
 
 const Signup = () => {
@@ -19,43 +17,43 @@ const Signup = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { isLoading, error } = useSelector((state) => state.auth);
+  const { isLoading, error, successMessage } = useSelector((state) => state.auth);
   const { toasts, showToast, removeToast } = useToast();
 
-  // Clear error when component unmounts
+  // Clear error/success on unmount
   useEffect(() => {
     return () => {
       dispatch(authActions.clearError());
+      dispatch(authActions.clearSuccess());
     };
   }, [dispatch]);
 
-  // Show error as toast notification
+  // Show error toast
   useEffect(() => {
     if (error) {
-      showToast(error, "error", 3000);
+      showToast(error, "error", 5000);
     }
   }, [error, showToast]);
 
-  // Password validation function
+  // Show success toast and redirect to login (NO auto-login)
+  useEffect(() => {
+    if (successMessage) {
+      showToast(successMessage, "success", 4000);
+      const timer = setTimeout(() => {
+        navigate("/login");
+      }, 2500); // 2.5 seconds delay to let user see toast
+
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage, navigate, showToast]);
+
   const validatePassword = (pwd) => {
     const errors = [];
-    
-    if (pwd.length < 8) {
-      errors.push("At least 8 characters");
-    }
-    if (!/[A-Z]/.test(pwd)) {
-      errors.push("One uppercase letter (A-Z)");
-    }
-    if (!/[a-z]/.test(pwd)) {
-      errors.push("One lowercase letter (a-z)");
-    }
-    if (!/[0-9]/.test(pwd)) {
-      errors.push("One number (0-9)");
-    }
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd)) {
-      errors.push("One special character (!@#$%^&* etc)");
-    }
-
+    if (pwd.length < 8) errors.push("At least 8 characters");
+    if (!/[A-Z]/.test(pwd)) errors.push("One uppercase letter");
+    if (!/[a-z]/.test(pwd)) errors.push("One lowercase letter");
+    if (!/[0-9]/.test(pwd)) errors.push("One number");
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd)) errors.push("One special character");
     return errors;
   };
 
@@ -70,20 +68,18 @@ const Signup = () => {
     }
   };
 
-  const isPasswordValid = () => {
-    return password && validatePassword(password).length === 0;
-  };
+  const isPasswordValid = () => password && validatePassword(password).length === 0;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!username || !fullName || !email || !password || !avatar || !coverImage) {
-      alert("All fields are required!");
+      showToast("All fields are required!", "error", 4000);
       return;
     }
 
     if (!isPasswordValid()) {
-      alert("Password does not meet security requirements");
+      showToast("Password does not meet security requirements", "error", 4000);
       return;
     }
 
@@ -95,27 +91,19 @@ const Signup = () => {
     formData.append("avatar", avatar);
     formData.append("coverImage", coverImage);
 
-    // Dispatch register thunk - error will be handled by useEffect below
-    const result = await dispatch(registerUser(formData));
-    
-    // Only redirect to login if registration was successful
-    if (result.type === "auth/registerUser/fulfilled") {
-      navigate("/login");
-    }
-    // If failed, error will be shown as toast and user stays on signup page
+    // Dispatch signup – success/error handled via useEffect
+    await dispatch(registerUser(formData));
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex flex-col overflow-hidden">
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
       
-      {/* Decorative elements */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600 rounded-full filter blur-3xl opacity-10"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-600 rounded-full filter blur-3xl opacity-10"></div>
 
       <main className="flex-1 flex items-center justify-center px-4 py-8 relative z-10">
         <div className="w-full max-w-lg">
-          {/* Header */}
           <div className="text-center mb-8">
             <a href="/" className="inline-block mb-6 transform hover:scale-105 transition">
               <img src="/Logo.png" alt="Logo" className="h-14 mx-auto drop-shadow-lg" />
@@ -124,10 +112,7 @@ const Signup = () => {
             <p className="text-gray-400 text-sm">Join our community and start creating</p>
           </div>
 
-          {/* Form Card */}
           <form onSubmit={handleSubmit} className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-2xl p-6 sm:p-8 space-y-4">
-            
-            {/* Username */}
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">Username</label>
               <input
@@ -140,7 +125,6 @@ const Signup = () => {
               />
             </div>
 
-            {/* Full Name */}
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">Full Name</label>
               <input
@@ -153,7 +137,6 @@ const Signup = () => {
               />
             </div>
 
-            {/* Email */}
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">Email Address</label>
               <input
@@ -166,7 +149,6 @@ const Signup = () => {
               />
             </div>
 
-            {/* Password */}
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">Password</label>
               <div className="relative">
@@ -220,7 +202,6 @@ const Signup = () => {
               )}
             </div>
 
-            {/* Avatar Upload */}
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">Profile Picture *</label>
               <div className="relative">
@@ -238,7 +219,6 @@ const Signup = () => {
               </div>
             </div>
 
-            {/* Cover Image Upload */}
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">Cover Image *</label>
               <div className="relative">
@@ -256,14 +236,12 @@ const Signup = () => {
               </div>
             </div>
 
-            {/* Error Message */}
             {error && (
               <div className="bg-red-900/20 border border-red-700/50 text-red-400 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
-            {/* Sign Up Button */}
             <button
               type="submit"
               disabled={isLoading || !isPasswordValid()}
@@ -282,8 +260,7 @@ const Signup = () => {
               )}
             </button>
 
-            {/* Divider */}
-            <div className="relative">
+            <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-600"></div>
               </div>
@@ -292,7 +269,6 @@ const Signup = () => {
               </div>
             </div>
 
-            {/* Login Link */}
             <p className="text-center text-sm text-gray-400">
               <Link to="/login" className="text-purple-400 hover:text-purple-300 font-semibold transition">
                 Sign in here
@@ -300,7 +276,6 @@ const Signup = () => {
             </p>
           </form>
 
-          {/* Footer */}
           <p className="text-center text-xs text-gray-500 mt-6">
             By creating an account, you agree to our Terms of Service and Privacy Policy
           </p>

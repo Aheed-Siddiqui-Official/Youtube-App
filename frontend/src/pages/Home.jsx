@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
 import VideoCard from "../components/video/VideoCard";
@@ -13,18 +13,19 @@ const Home = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { allVideos, loading, loadingMore, hasMore, currentPage } = useSelector(
-    (state) => state.videos,
+    (state) => state.videos
   );
-  const { user } = useSelector((state) => state.auth);
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
   const { toasts, showToast, removeToast } = useToast();
 
   const videoIdFromUrl = searchParams.get("v");
   const selectedVideo = allVideos.find((v) => v._id === videoIdFromUrl) || null;
 
   const observerTarget = useRef(null);
+  const previewRefs = useRef({}); // refs for hover video previews
 
   const handleVideoClick = (video) => {
-    if (!user) {
+    if (!isAuthenticated) {
       showToast("Please log in to watch videos", "warning", 5000);
       return;
     }
@@ -41,14 +42,14 @@ const Home = () => {
     dispatch(fetchAllVideos({ page: 1, limit: 10 }));
   }, [dispatch]);
 
-  // Infinite scroll observer
+  // Infinite scroll
   const handleObserverEntry = useCallback(
     (entries) => {
       if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
         dispatch(fetchAllVideos({ page: currentPage, limit: 10 }));
       }
     },
-    [hasMore, loadingMore, loading, currentPage, dispatch],
+    [hasMore, loadingMore, loading, currentPage, dispatch]
   );
 
   useEffect(() => {
@@ -67,6 +68,33 @@ const Home = () => {
       }
     };
   }, [handleObserverEntry]);
+
+  // Hover preview with FULL VOLUME (only for non-logged-in users)
+  const handleMouseEnter = (videoId, videoUrl) => {
+    if (isAuthenticated || !videoUrl) return;
+
+    const videoEl = previewRefs.current[videoId];
+    if (videoEl) {
+      videoEl.currentTime = 0;
+      videoEl.volume = 1.0;          // Full volume
+      videoEl.muted = false;         // Sound ON
+      videoEl.loop = true;
+      videoEl.play().catch((err) => {
+        console.log("Autoplay blocked:", err);
+        // Browsers may block unmuted autoplay until user interaction
+      });
+    }
+  };
+
+  const handleMouseLeave = (videoId) => {
+    if (isAuthenticated) return;
+
+    const videoEl = previewRefs.current[videoId];
+    if (videoEl) {
+      videoEl.pause();
+      videoEl.currentTime = 0;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-950 text-white">
@@ -115,23 +143,40 @@ const Home = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
-              {allVideos.map((video, index) => (
+              {allVideos.map((video) => (
                 <div
                   key={video._id}
                   className="relative group rounded-xl overflow-hidden transform transition-all duration-300 hover:scale-105 cursor-pointer"
-                  style={{ animationDelay: `${index * 0.1}s` }}
                   onClick={() => handleVideoClick(video)}
+                  onMouseEnter={() => handleMouseEnter(video._id, video.videoFile)}
+                  onMouseLeave={() => handleMouseLeave(video._id)}
                 >
+                  {/* Hover Preview Video - FULL VOLUME, full length */}
+                  {!isAuthenticated && video.videoFile && (
+                    <video
+                      ref={(el) => (previewRefs.current[video._id] = el)}
+                      src={video.videoFile}
+                      className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                      loop
+                      playsInline
+                    />
+                  )}
+
+                  {/* Thumbnail - hidden only on hover for non-logged-in */}
+                  <div className={`${!isAuthenticated ? "group-hover:opacity-0" : ""} transition-opacity duration-300`}>
+                    <VideoCard
+                      thumbnail={video.thumbnail}
+                      duration={video.duration || "0:00"}
+                      avatarUrl={video.owner?.avatar}
+                      title={video.title}
+                      channelName={video.owner?.username}
+                      views={`${video.views || 0} views`}
+                      uploadTime={new Date(video.createdAt).toLocaleDateString()}
+                    />
+                  </div>
+
+                  {/* Hover overlay */}
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 rounded-xl"></div>
-                  <VideoCard
-                    thumbnail={video.thumbnail}
-                    duration={video.duration || "0:00"}
-                    avatarUrl={video.owner?.avatar}
-                    title={video.title}
-                    channelName={video.owner?.username}
-                    views={`${video.views || 0} views`}
-                    uploadTime={new Date(video.createdAt).toLocaleDateString()}
-                  />
                 </div>
               ))}
             </div>
@@ -183,7 +228,7 @@ const Home = () => {
           </>
         )}
 
-        {selectedVideo && (
+        {selectedVideo && isAuthenticated && (
           <VideoPlayer
             video={selectedVideo}
             user={user}

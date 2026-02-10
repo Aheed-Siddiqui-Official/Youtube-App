@@ -357,3 +357,31 @@ $addToSet donot cause duplicates in watch history
 static and dynamic routes
 
 use search params
+
+app.use to specify paths on middlewares in express
+
+.populate automatically replace specified paths in a document with actual document(s) from other collection
+
+Without .populate(), if a User document contains an ObjectId reference to a Post document, you would only receive the ID of the post when querying the user. 
+Without populate: You get { _id: 1, name: "Alice", post: "60b..." }
+With populate: You get { _id: 1, name: "Alice", post: { _id: "60b...", title: "My Day", ... } }.
+
+
+only update below field not entire document
+ await Video.findByIdAndUpdate(video?._id,{
+    $set:{isChecked:!video.isChecked},
+    
+   },{new:true})
+
+
+   const updateQuery = isCheckedPlaylist
+    ? {
+        $pull: { playlistVideos: video?._id },
+        $unset: { slug: "" }, // Remove slug when removing video
+      }
+    : {
+        $push: { playlistVideos: video?._id },
+        $set: { slug }, // Store latest added video's slug
+      };
+
+.lean() method converts Mongoose query results from full Mongoose Documents into plain JavaScript objects. 

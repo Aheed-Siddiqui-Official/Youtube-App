@@ -176,6 +176,9 @@ const authSlice = createSlice({
       // Used by profile update
       state.user = action.payload;
     },
+    clearSuccess: (state) => {
+      state.successMessage = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -183,15 +186,17 @@ const authSlice = createSlice({
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
+        state.successMessage = null;
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload;
-        state.isAuthenticated = true;
+        state.successMessage = "Account created successfully! Please log in."; // This triggers redirect in Signup.jsx
+        state.error = null;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+        state.successMessage = null;
       })
 
       // -------- Login --------
