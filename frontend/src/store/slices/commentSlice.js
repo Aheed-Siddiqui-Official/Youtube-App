@@ -32,7 +32,7 @@ export const getCommentsByVideo = createAsyncThunk(
       const response = await api.get(`/api/v1/comment/${videoId}`);
       // Ensure owner data is preserved from backend
       const comments = response.data.data;
-      console.log("Comments fetched from backend:", comments);
+      // console.log("Comments fetched from backend:", comments);
       return comments;
     } catch (error) {
       return rejectWithValue(

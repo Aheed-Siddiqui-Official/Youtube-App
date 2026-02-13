@@ -23,6 +23,7 @@ export const fetchPlaylists = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await api.get("/api/v1/playlist");
+      
       return res.data.data;
     } catch (err) {
       return rejectWithValue(
