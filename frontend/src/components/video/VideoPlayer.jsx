@@ -21,6 +21,7 @@ import {
   fetchPlaylists,
   toggleVideoInPlaylist,
 } from "../../store/slices/playlistSlice.js";
+import CommentSection from "./CommentSection.jsx";
 
 const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
   const videoRef = useRef(null);
@@ -35,7 +36,6 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
   const [isMuted, setIsMuted] = useState(false);
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
 
-  // Redux selectors
   const { currentVideo, loading } = useSelector((state) => state.videos);
   const { subscribedChannels } = useSelector((state) => state.videos);
   const { user: currentUser } = useSelector((state) => state.auth);
@@ -57,13 +57,11 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
 
   const speedOptions = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
-  // Fetch data when modal opens
   useEffect(() => {
     if (initialVideo?._id) {
       dispatch(fetchSingleVideo(initialVideo._id));
       dispatch(fetchSubscriberCount(initialVideo.owner?._id));
       dispatch(fetchLikedVideos());
-      // Always refresh playlists when player opens
       dispatch(fetchPlaylists());
     }
 
@@ -93,13 +91,12 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
     }
   };
 
-  // Open playlist modal + force refresh playlists right before showing
   const handleSaveClick = () => {
-    dispatch(fetchPlaylists()); // Refresh immediately
+    dispatch(fetchPlaylists());
     setShowPlaylistModal(true);
   };
 
-  // ── Video controls ─────────────────────────────────────────────
+  // ── Video controls (unchanged) ─────────────────────────────────────
   const togglePlay = () => {
     if (!videoRef.current) return;
     if (isPlaying) {
@@ -111,15 +108,11 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
   };
 
   const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
-    }
+    if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
   };
 
   const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      setDuration(videoRef.current.duration || 0);
-    }
+    if (videoRef.current) setDuration(videoRef.current.duration || 0);
   };
 
   const handleProgressChange = (e) => {
@@ -217,7 +210,6 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
 
               {/* Main Controls */}
               <div className="px-4 pb-5 sm:pb-6 flex items-center justify-between">
-                {/* Left Controls */}
                 <div className="flex items-center gap-3 sm:gap-5">
                   <button
                     onClick={togglePlay}
@@ -252,7 +244,6 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
                   </span>
                 </div>
 
-                {/* Right Controls */}
                 <div className="flex items-center gap-2 sm:gap-4">
                   <div className="relative">
                     <button
@@ -292,7 +283,6 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
               </div>
             </div>
 
-            {/* Big Play Button when paused */}
             {!isPlaying && !loading && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none group-hover:pointer-events-auto">
                 <button
@@ -313,14 +303,13 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
         </div>
       </div>
 
-      {/* Video Info Section */}
+      {/* Video Info + Comments */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8 text-white">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 line-clamp-2">
           {loading ? "Loading..." : displayedVideo.title}
         </h1>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 pb-6 border-b border-gray-700">
-          {/* Channel Info */}
           <div className="flex items-center gap-4">
             <img
               src={
@@ -352,7 +341,6 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
             </button>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-2 sm:gap-3 flex-wrap">
             <button
               onClick={handleLikeClick}
@@ -375,7 +363,6 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
               <Share2 size={18} /> Share
             </button>
 
-            {/* SAVE BUTTON */}
             <button
               onClick={handleSaveClick}
               className="flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full bg-gray-800/70 hover:bg-gray-700 text-white transition-all text-sm sm:text-base"
@@ -401,9 +388,12 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
               : displayedVideo.description || "No description provided."}
           </div>
         </div>
+
+        {/* Comments Section - Integrated here */}
+        <CommentSection videoId={displayedVideo._id} />
       </div>
 
-      {/* PLAYLIST MODAL */}
+      {/* Playlist Modal */}
       {showPlaylistModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] overflow-y-auto">
           <div className="bg-gray-900 p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-lg mx-4 border border-gray-700">
@@ -463,9 +453,7 @@ const VideoPlayer = ({ video: initialVideo, user, onClose }) => {
                               slug: displayedVideo.slug,
                             }),
                           );
-                          // Force refresh after toggle
                           dispatch(fetchPlaylists());
-                          // Close modal after action
                           setShowPlaylistModal(false);
                         }}
                         className={`px-6 py-2 rounded-full text-sm font-medium transition ${

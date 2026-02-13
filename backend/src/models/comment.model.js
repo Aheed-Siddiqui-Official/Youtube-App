@@ -6,15 +6,28 @@ const commentSchema = new Schema(
     content: {
       type: String,
       required: true,
+      trim: true,
     },
+
     video: {
       type: Schema.Types.ObjectId,
       ref: "Video",
+      required: true,
+      index: true,
     },
+
     owner: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      required: true,
     },
+
+    likes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
     timestamps: true,

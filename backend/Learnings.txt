@@ -385,3 +385,5 @@ only update below field not entire document
       };
 
 .lean() method converts Mongoose query results from full Mongoose Documents into plain JavaScript objects. 
+
+.trim remove whitespace from both the beginning and the end of a string

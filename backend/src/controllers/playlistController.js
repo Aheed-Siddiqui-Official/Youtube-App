@@ -125,6 +125,8 @@ export const getSinglePlaylist = asyncHandler(async (req, res) => {
       select: "username avatar",
     },
   });
+  // console.log(playlist);
+  
 
   if (!playlist) {
     throw new ApiError(404, "Playlist not found");
