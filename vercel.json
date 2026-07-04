@@ -8,7 +8,9 @@
     "backend": {
       "root": "backend",
       "entrypoint": "src/app.js",
-      "mount": "/api"
+      "mount": "/api",
+      "maxDuration": 300,
+      "memory": 3008
     }
   }
 }
