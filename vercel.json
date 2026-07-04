@@ -1,4 +1,5 @@
 {
+  "experimentalServices": true,
   "services": {
     "frontend": {
       "root": "frontend",
