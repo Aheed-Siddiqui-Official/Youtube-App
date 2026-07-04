@@ -208,7 +208,7 @@ export const updateVideo = asyncHandler(async (req, res) => {
     const uploadResponse = await uploadOnCloudinary(videoFile);
 
     if (!uploadResponse) {
-      throw new ApiError(400, \"Failed to upload video\");
+      throw new ApiError(400, "Failed to upload video");
     }
 
     updatedVideoURL = uploadResponse.url;
