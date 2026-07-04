@@ -12,15 +12,15 @@ export const uploadVideo = asyncHandler(async (req, res) => {
   const { title, description, category, isPublic } = req.body;
 
   if ([title, description].some((field) => field?.trim() === "")) {
-    throw new ApiError("All field are required");
+    throw new ApiError(400, "All fields are required");
   }
 
-  const videoLocalPath = req.files?.video?.[0]?.path;
-  if (!videoLocalPath) {
+  const videoFile = req.files?.video?.[0];
+  if (!videoFile) {
     throw new ApiError(400, "Video file is required");
   }
 
-  const videoURL = await uploadOnCloudinary(videoLocalPath);
+  const videoURL = await uploadOnCloudinary(videoFile);
 
   if (!videoURL) {
     throw new ApiError(400, "Failed to upload video");
@@ -201,19 +201,17 @@ export const updateVideo = asyncHandler(async (req, res) => {
     throw new ApiError(403, "You are not authorized to update this video");
   }
 
-  // GET VIDEO FROM MULTER
-  const videoLocalPath = req.file?.path;
+  const videoFile = req.file;
 
-  // UPLOAD CLOUDINARY (only if video file is provided)
   let updatedVideoURL;
-  if (videoLocalPath) {
-    const uploadResponse = await uploadOnCloudinary(videoLocalPath);
+  if (videoFile) {
+    const uploadResponse = await uploadOnCloudinary(videoFile);
 
-    // DELETE OLD VIDEO if new video is uploaded
-    await cloudinary.uploader.destroy(video.videoFile);
+    if (!uploadResponse) {
+      throw new ApiError(400, \"Failed to upload video\");
+    }
 
-    // Update the video file URL with the response URL
-    updatedVideoURL = uploadResponse?.secure_url; // Access the URL from the response
+    updatedVideoURL = uploadResponse.url;
   }
 
   // Generate new thumbnail URL only if video is updated
